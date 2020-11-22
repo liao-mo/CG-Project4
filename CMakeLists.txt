@@ -18,6 +18,13 @@ include_directories(${INCLUDE_DIR})
 include_directories(${INCLUDE_DIR}glad4.6/include/)
 include_directories(${INCLUDE_DIR}glm-0.9.8.5/glm/)
 
+configure_file(configuration/root_directory.h.in configuration/root_directory.h)
+include_directories(${CMAKE_BINARY_DIR}/configuration)
+
+# first create relevant static libraries requried for other projects
+add_library(STB_IMAGE "src/stb_image.cpp")
+set(LIBS ${LIBS} STB_IMAGE)
+
 add_Definitions("-D_XKEYCHECK_H")
 
 add_executable(WaterSurface

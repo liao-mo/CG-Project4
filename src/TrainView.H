@@ -27,8 +27,13 @@
 #pragma once
 
 #include "RenderUtilities/BufferObject.h"
-#include "RenderUtilities/Shader.h"
+//#include "RenderUtilities/Shader.h"
 #include "RenderUtilities/Texture.h"
+
+#include <learnopengl/filesystem.h>
+#include <learnopengl/shader_m.h>
+#include <learnopengl/camera.h>
+#include <learnopengl/model.h>
 
 // Preclarify for preventing the compiler error
 class TrainWindow;
@@ -93,10 +98,12 @@ class TrainView : public Fl_Gl_Window
 		TrainWindow*	tw;				// The parent of this display window
 		CTrack*			m_pTrack;		// The track of the entire scene
 
-		Shader* shader		= nullptr;
+		Shader* shader = nullptr;
 		Texture2D* texture	= nullptr;
 		VAO* plane			= nullptr;
 		UBO* commom_matrices= nullptr;
+
+		Model* test_model = nullptr;
 
 		//OpenAL
 		glm::vec3 source_pos;

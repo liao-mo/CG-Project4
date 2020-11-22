@@ -41,6 +41,8 @@
 
 
 
+
+
 #ifdef EXAMPLE_SOLUTION
 #	include "TrainExample/TrainExample.H"
 #endif
@@ -51,19 +53,17 @@
 // * Constructor to set up the GL window
 //========================================================================
 TrainView::
-TrainView(int x, int y, int w, int h, const char* l) 
-	: Fl_Gl_Window(x,y,w,h,l)
+TrainView(int x, int y, int w, int h, const char* l) : 
+	Fl_Gl_Window(x,y,w,h,l)
 //========================================================================
 {
 	mode( FL_RGB|FL_ALPHA|FL_DOUBLE | FL_STENCIL );
 
 	resetArcball();
+	
 }
 
-//************************************************************************
-//
 // * Reset the camera to look at the world
-//========================================================================
 void TrainView::
 resetArcball()
 //========================================================================
@@ -74,15 +74,7 @@ resetArcball()
 	arcball.setup(this, 40, 250, .2f, .4f, 0);
 }
 
-//************************************************************************
-//
 // * FlTk Event handler for the window
-//########################################################################
-// TODO: 
-//       if you want to make the train respond to other events 
-//       (like key presses), you might want to hack this.
-//########################################################################
-//========================================================================
 int TrainView::handle(int event)
 {
 	// see if the ArcBall will handle the event - if it does, 
@@ -172,30 +164,20 @@ int TrainView::handle(int event)
 	return Fl_Gl_Window::handle(event);
 }
 
-//************************************************************************
-//
 // * this is the code that actually draws the window
 //   it puts a lot of the work into other routines to simplify things
-//========================================================================
 void TrainView::draw()
 {
-
-	//*********************************************************************
-	//
 	// * Set up basic opengl informaiton
-	//
-	//**********************************************************************
 	//initialized glad
 	if (gladLoadGL())
 	{
 		//initiailize VAO, VBO, Shader...
+		shader = new Shader("../src/shaders/simple.vert", "../src/shaders/simple.frag");
 
-		if (!this->shader)
-			this->shader = new
-			Shader(
-				"../WaterSurface/src/shaders/simple.vert", 
-				nullptr, nullptr, nullptr, 
-				"../WaterSurface/src/shaders/simple.frag");
+		if (!this->test_model) {
+			test_model = new Model(FileSystem::getPath("resources/objects/Sci_fi_Train/Sci_fi_Train.obj"));
+		}
 
 		if (!this->commom_matrices)
 			this->commom_matrices = new UBO();
@@ -260,7 +242,7 @@ void TrainView::draw()
 		}
 
 		if (!this->texture)
-			this->texture = new Texture2D("../WaterSurface/Images/church.png");
+			this->texture = new Texture2D("../Images/church.png");
 
 		if (!this->device){
 			//Tutorial: https://ffainelli.github.io/openal-example/
@@ -300,7 +282,7 @@ void TrainView::draw()
 			ALboolean loop = AL_TRUE;
 
 			//Material from: ThinMatrix
-			alutLoadWAVFile((ALbyte*)"../WaterSurface/Audios/bounce.wav", &format, &data, &size, &freq, &loop);
+			alutLoadWAVFile((ALbyte*)"../resources/audio/YOASOBI0.wav", &format, &data, &size, &freq, &loop);
 			alBufferData(this->buffer, format, data, size, freq);
 			alSourcei(this->source, AL_BUFFER, this->buffer);
 
@@ -309,6 +291,7 @@ void TrainView::draw()
 			else if (format == AL_FORMAT_MONO16 || format == AL_FORMAT_MONO8)
 				puts("TYPE::MONO");
 
+			alSourcef(source, AL_GAIN, 0.1);
 			alSourcePlay(this->source);
 
 			// cleanup context
@@ -343,11 +326,10 @@ void TrainView::draw()
 	glLoadIdentity();
 	setProjection();		// put the code to set up matrices here
 
-	//######################################################################
 	// TODO: 
 	// you might want to set the lighting up differently. if you do, 
 	// we need to set up the lights AFTER setting up the projection
-	//######################################################################
+
 	// enable the lighting
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_DEPTH_TEST);
@@ -431,20 +413,28 @@ void TrainView::draw()
 		GL_UNIFORM_BUFFER, /*binding point*/0, this->commom_matrices->ubo, 0, this->commom_matrices->size);
 
 	//bind shader
-	this->shader->Use();
+	shader->use();
 
 	glm::mat4 model_matrix = glm::mat4();
 	model_matrix = glm::translate(model_matrix, this->source_pos);
 	model_matrix = glm::scale(model_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
-	glUniformMatrix4fv(glGetUniformLocation(this->shader->Program, "u_model"), 1, GL_FALSE, &model_matrix[0][0]);
-	glUniform3fv(glGetUniformLocation(this->shader->Program, "u_color"), 1, &glm::vec3(0.0f, 1.0f, 0.0f)[0]);
+	//glUniformMatrix4fv(glGetUniformLocation(this->shader->Program, "u_model"), 1, GL_FALSE, );
+	shader->setMat4("u_model", model_matrix);
+	//glUniform3fv(glGetUniformLocation(this->shader->Program, "u_color"), 1, &glm::vec3(0.0f, 1.0f, 0.0f)[0]);
+	shader->setVec3("u_color", glm::vec3(0.0f, 1.0f, 0.0f));
 	this->texture->bind(0);
-	glUniform1i(glGetUniformLocation(this->shader->Program, "u_texture"), 0);
+	//glUniform1i(glGetUniformLocation(this->shader->Program, "u_texture"), 0);
+	shader->setInt("u_texture", 0);
 	
 	//bind VAO
 	glBindVertexArray(this->plane->vao);
 
 	glDrawElements(GL_TRIANGLES, this->plane->element_amount, GL_UNSIGNED_INT, 0);
+
+	test_model->Draw(*shader);
+	model_matrix = glm::translate(model_matrix, glm::vec3(30.0f, 30, 30));
+	shader->setMat4("u_model", model_matrix);
+	test_model->Draw(*shader);
 
 	//unbind VAO
 	glBindVertexArray(0);
