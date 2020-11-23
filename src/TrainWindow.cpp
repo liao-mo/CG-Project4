@@ -156,9 +156,7 @@ TrainWindow(const int x, const int y)
 
 
 		// TODO: add widgets for all of your fancier features here
-#ifdef EXAMPLE_SOLUTION
-		makeExampleWidgets(this,pty);
-#endif
+
 
 		// we need to make a little phantom widget to have things resize correctly
 		Fl_Box* resizebox = new Fl_Box(600,595,200,5);

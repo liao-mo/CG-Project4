@@ -98,7 +98,7 @@ class TrainView : public Fl_Gl_Window
 		//set ubo
 		void setUBO();
 	public:
-		//ArcBallCam		arcball;			// keep an ArcBall for the UI
+		ArcBallCam		arcball;			// keep an ArcBall for the UI
 		int				selectedCube;  // simple - just remember which cube is selected
 
 		TrainWindow*	tw;				// The parent of this display window
@@ -122,6 +122,7 @@ class TrainView : public Fl_Gl_Window
 		float lastX = SCR_WIDTH / 2.0f;
 		float lastY = SCR_HEIGHT / 2.0f;
 		bool firstMouse = true;
+		void updata_camera();
 
 		//OpenAL
 		glm::vec3 source_pos;
@@ -136,4 +137,9 @@ class TrainView : public Fl_Gl_Window
 		int now_t;
 		float delta_t;
 		void updateTimer();
+
+		//events
+		int k;
+		int ks;
+		bool k_pressed;
 };

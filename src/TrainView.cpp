@@ -41,18 +41,7 @@
 #include "Utilities/3DUtils.H"
 
 
-
-
-
-#ifdef EXAMPLE_SOLUTION
-#	include "TrainExample/TrainExample.H"
-#endif
-
-
-//************************************************************************
-//
-// * Constructor to set up the GL window
-//========================================================================
+// Constructor to set up the GL window
 TrainView::
 TrainView(int x, int y, int w, int h, const char* l) : 
 	Fl_Gl_Window(x,y,w,h,l)
@@ -64,17 +53,14 @@ TrainView(int x, int y, int w, int h, const char* l) :
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 	camera.MovementSpeed = 50.0f;
 	old_t = glutGet(GLUT_ELAPSED_TIME);
+	k_pressed = false;
 }
 
 // * Reset the camera to look at the world
 void TrainView::
 resetArcball()
-//========================================================================
 {
-	// Set up the camera to look at the world
-	// these parameters might seem magical, and they kindof are
-	// a little trial and error goes a long way
-	//arcball.setup(this, 40, 250, .2f, .4f, 0);
+	arcball.setup(this, 40, 250, .2f, .4f, 0);
 }
 
 // * FlTk Event handler for the window
@@ -87,128 +73,124 @@ int TrainView::handle(int event)
 		//if (arcball.handle(event))
 		//	return 1;
 	}
-		
+
 
 	// remember what button was used
 	static int last_push;
+	
 
-	switch(event) {
+	switch (event) {
 		// Mouse button being pushed event
-		case FL_PUSH:
-			last_push = Fl::event_button();
-			// if the left button be pushed is left mouse button
-			if (last_push == FL_LEFT_MOUSE  ) {
-				doPick();
-				damage(1);
-				return 1;
-			}else if (last_push == FL_RIGHT_MOUSE) {
-				int xpos = Fl::event_x();
-				int ypos = Fl::event_y();
-				lastX = xpos;
-				lastY = ypos;
-				damage(1);
-				return 1;
-			}
-			break;
-
-	   // Mouse button release event
-		case FL_RELEASE: // button release
+	case FL_PUSH:
+		last_push = Fl::event_button();
+		// if the left button be pushed is left mouse button
+		if (last_push == FL_LEFT_MOUSE) {
+			doPick();
 			damage(1);
-			last_push = 0;
 			return 1;
+		}
+		else if (last_push == FL_RIGHT_MOUSE) {
+			int xpos = Fl::event_x();
+			int ypos = Fl::event_y();
+			lastX = xpos;
+			lastY = ypos;
+			damage(1);
+			return 1;
+		}
+		break;
+
+		// Mouse button release event
+	case FL_RELEASE: // button release
+		damage(1);
+		last_push = 0;
+		return 1;
 
 		// Mouse button drag event
-		case FL_DRAG:
+	case FL_DRAG:
 
-			// Compute the new control point position
-			if ((last_push == FL_LEFT_MOUSE) && (selectedCube >= 0)) {
-				ControlPoint* cp = &m_pTrack->points[selectedCube];
+		// Compute the new control point position
+		if ((last_push == FL_LEFT_MOUSE) && (selectedCube >= 0)) {
+			ControlPoint* cp = &m_pTrack->points[selectedCube];
 
-				double r1x, r1y, r1z, r2x, r2y, r2z;
-				getMouseLine(r1x, r1y, r1z, r2x, r2y, r2z);
+			double r1x, r1y, r1z, r2x, r2y, r2z;
+			getMouseLine(r1x, r1y, r1z, r2x, r2y, r2z);
 
-				double rx, ry, rz;
-				mousePoleGo(r1x, r1y, r1z, r2x, r2y, r2z, 
-								static_cast<double>(cp->pos.x), 
-								static_cast<double>(cp->pos.y),
-								static_cast<double>(cp->pos.z),
-								rx, ry, rz,
-								(Fl::event_state() & FL_CTRL) != 0);
+			double rx, ry, rz;
+			mousePoleGo(r1x, r1y, r1z, r2x, r2y, r2z,
+				static_cast<double>(cp->pos.x),
+				static_cast<double>(cp->pos.y),
+				static_cast<double>(cp->pos.z),
+				rx, ry, rz,
+				(Fl::event_state() & FL_CTRL) != 0);
 
-				cp->pos.x = (float) rx;
-				cp->pos.y = (float) ry;
-				cp->pos.z = (float) rz;
-				damage(1);
-			}
-			else if (last_push == FL_RIGHT_MOUSE) {
-				// where is the mouse?
-				int xpos = Fl::event_x();
-				int ypos = Fl::event_y();
-				if (firstMouse)
-				{
-					lastX = xpos;
-					lastY = ypos;
-					firstMouse = false;
-				}
-
-				float xoffset = xpos - lastX;
-				float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
+			cp->pos.x = (float)rx;
+			cp->pos.y = (float)ry;
+			cp->pos.z = (float)rz;
+			damage(1);
+		}
+		else if (last_push == FL_RIGHT_MOUSE) {
+			// where is the mouse?
+			int xpos = Fl::event_x();
+			int ypos = Fl::event_y();
+			if (firstMouse)
+			{
 				lastX = xpos;
 				lastY = ypos;
-
-				camera.ProcessMouseMovement(xoffset, yoffset);
-				damage(1);
+				firstMouse = false;
 			}
-			break;
+
+			float xoffset = xpos - lastX;
+			float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+			lastX = xpos;
+			lastY = ypos;
+
+			camera.ProcessMouseMovement(xoffset, yoffset);
+			damage(1);
+		}
+		break;
 
 		// in order to get keyboard events, we need to accept focus
-		case FL_FOCUS:
-			return 1;
+	case FL_FOCUS:
+		return 1;
 
 		// every time the mouse enters this window, aggressively take focus
-		case FL_ENTER:	
-			focus(this);
-			break;
+	case FL_ENTER:
+		focus(this);
+		break;
 
-		case FL_KEYBOARD:
-		 		int k = Fl::event_key();
-				int ks = Fl::event_state();
-				if (k == 'p') {
-					// Print out the selected control point information
-					if (selectedCube >= 0) 
-						printf("Selected(%d) (%g %g %g) (%g %g %g)\n",
-								 selectedCube,
-								 m_pTrack->points[selectedCube].pos.x,
-								 m_pTrack->points[selectedCube].pos.y,
-								 m_pTrack->points[selectedCube].pos.z,
-								 m_pTrack->points[selectedCube].orient.x,
-								 m_pTrack->points[selectedCube].orient.y,
-								 m_pTrack->points[selectedCube].orient.z);
-					else
-						printf("Nothing Selected\n");
+	case FL_KEYBOARD:
+		if (k_pressed == false) {
+			k_pressed = true;
+			damage(1);
+		}
 
-					return 1;
-				};
-				if (k == 'w') {
-					camera.ProcessKeyboard(FORWARD, delta_t);
-					damage(1);
-				}
-				if (k == 's') {
-					camera.ProcessKeyboard(BACKWARD, delta_t);
-					damage(1);
-				}
-				if (k == 'a') {
-					camera.ProcessKeyboard(LEFT, delta_t);
-					damage(1);
-				}
-				if (k == 'd') {
-					camera.ProcessKeyboard(RIGHT, delta_t);
-					damage(1);
-				}
-				//cout << camera.Position.x << " " << camera.Position.y << " " << camera.Position.z << endl;
-				break;
+		k = Fl::event_key();
+		ks = Fl::event_state();
+		if (k == 'p') {
+			// Print out the selected control point information
+			if (selectedCube >= 0)
+				printf("Selected(%d) (%g %g %g) (%g %g %g)\n",
+					selectedCube,
+					m_pTrack->points[selectedCube].pos.x,
+					m_pTrack->points[selectedCube].pos.y,
+					m_pTrack->points[selectedCube].pos.z,
+					m_pTrack->points[selectedCube].orient.x,
+					m_pTrack->points[selectedCube].orient.y,
+					m_pTrack->points[selectedCube].orient.z);
+			else
+				printf("Nothing Selected\n");
+
+			return 1;
+		};
+		break;
+
+	case 9:
+		k_pressed = false;
+		cout << "key up" << endl;
+		break;
 	}
+
 
 	return Fl_Gl_Window::handle(event);
 }
@@ -317,14 +299,18 @@ void TrainView::draw()
 		if (!this->device){
 			//Tutorial: https://ffainelli.github.io/openal-example/
 			this->device = alcOpenDevice(NULL);
-			if (!this->device)
-				puts("ERROR::NO_AUDIO_DEVICE");
+			if (!this->device) {
+				//puts("ERROR::NO_AUDIO_DEVICE");
+			}
+				
 
 			ALboolean enumeration = alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT");
-			if (enumeration == AL_FALSE)
-				puts("Enumeration not supported");
-			else
-				puts("Enumeration supported");
+			if (enumeration == AL_FALSE) {
+				//puts("Enumeration not supported");
+			}
+			else {
+				//puts("Enumeration supported");
+			}
 
 			this->context = alcCreateContext(this->device, NULL);
 			if (!alcMakeContextCurrent(context))
@@ -396,6 +382,7 @@ void TrainView::draw()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	setProjection();		// put the code to set up matrices here
+	
 
 	// TODO: 
 	// you might want to set the lighting up differently. if you do, 
@@ -638,6 +625,7 @@ setProjection()
 	// Check whether we use the world camp
 	if (tw->worldCam->value()) {
 		//arcball.setProjection(false);
+		updata_camera();
 	}
 	// Or we use the top cam
 	else if (tw->topCam->value()) {
@@ -812,4 +800,27 @@ void TrainView::updateTimer() {
 	old_t = now_t;
 	//cout << "delta time: " << delta_t << endl;
 	//glutPostRedisplay();
+}
+
+void TrainView::updata_camera() {
+	if (k_pressed) {
+		if (k == 'w') {
+			camera.ProcessKeyboard(FORWARD, delta_t);
+			damage(1);
+		}
+		if (k == 's') {
+			camera.ProcessKeyboard(BACKWARD, delta_t);
+			damage(1);
+		}
+		if (k == 'a') {
+			camera.ProcessKeyboard(LEFT, delta_t);
+			damage(1);
+		}
+		if (k == 'd') {
+			camera.ProcessKeyboard(RIGHT, delta_t);
+			damage(1);
+		}
+	}
+	
+	//cout << camera.Position.x << " " << camera.Position.y << " " << camera.Position.z << endl;
 }
