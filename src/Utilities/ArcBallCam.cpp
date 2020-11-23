@@ -155,7 +155,7 @@ handle(int e)
 					wind->damage(1);
 					return 1;
 				}
-
+				
 				// Get the mouse position
 				float x, y;
 				getMouseNDC(x,y);

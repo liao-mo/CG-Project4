@@ -28,14 +28,15 @@
 #pragma warning(push)
 #pragma warning(disable:4312)
 #pragma warning(disable:4311)
+#include <GL/glut.h>
 #include <Fl/Fl.h>
 #pragma warning(pop)
 
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
 	printf("CS559 Train Assignment\n");
-
+	glutInit(&argc, argv);
 	TrainWindow tw;
 	tw.show();
 

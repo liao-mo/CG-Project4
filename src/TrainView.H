@@ -35,6 +35,12 @@
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
 
+
+#define SCR_WIDTH 800
+#define SCR_HEIGHT 600
+#define NEAR 0.01
+#define FAR 5000.0
+
 // Preclarify for preventing the compiler error
 class TrainWindow;
 class CTrack;
@@ -92,18 +98,27 @@ class TrainView : public Fl_Gl_Window
 		//set ubo
 		void setUBO();
 	public:
-		ArcBallCam		arcball;			// keep an ArcBall for the UI
+		//ArcBallCam		arcball;			// keep an ArcBall for the UI
 		int				selectedCube;  // simple - just remember which cube is selected
 
 		TrainWindow*	tw;				// The parent of this display window
 		CTrack*			m_pTrack;		// The track of the entire scene
 
-		Shader* shader = nullptr;
+		//shader objects
+		Shader* main_shader = nullptr;
+		Shader* light_source_shader = nullptr;
 		Texture2D* texture	= nullptr;
 		VAO* plane			= nullptr;
 		UBO* commom_matrices= nullptr;
 
+		//models
 		Model* test_model = nullptr;
+
+		// camera
+		Camera camera;
+		float lastX = SCR_WIDTH / 2.0f;
+		float lastY = SCR_HEIGHT / 2.0f;
+		bool firstMouse = true;
 
 		//OpenAL
 		glm::vec3 source_pos;
@@ -113,5 +128,9 @@ class TrainView : public Fl_Gl_Window
 		ALuint source;
 		ALuint buffer;
 
-
+		//timer
+		int old_t;
+		int now_t;
+		float delta_t;
+		void updateTimer();
 };

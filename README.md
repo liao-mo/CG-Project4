@@ -2,6 +2,10 @@
 
 NTUST 電腦圖學導論 project 4
 
+## 2020/11/23
+
+加入glut，設定camera
+
 ## 2020/11/22
 
 把learn openGL的程式庫移植到目前的project

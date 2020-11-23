@@ -34,6 +34,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <GL/glu.h>
+#include <GL/glut.h>
 
 #include "TrainView.H"
 #include "TrainWindow.H"
@@ -60,7 +61,9 @@ TrainView(int x, int y, int w, int h, const char* l) :
 	mode( FL_RGB|FL_ALPHA|FL_DOUBLE | FL_STENCIL );
 
 	resetArcball();
-	
+	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+	camera.MovementSpeed = 50.0f;
+	old_t = glutGet(GLUT_ELAPSED_TIME);
 }
 
 // * Reset the camera to look at the world
@@ -71,7 +74,7 @@ resetArcball()
 	// Set up the camera to look at the world
 	// these parameters might seem magical, and they kindof are
 	// a little trial and error goes a long way
-	arcball.setup(this, 40, 250, .2f, .4f, 0);
+	//arcball.setup(this, 40, 250, .2f, .4f, 0);
 }
 
 // * FlTk Event handler for the window
@@ -80,9 +83,11 @@ int TrainView::handle(int event)
 	// see if the ArcBall will handle the event - if it does, 
 	// then we're done
 	// note: the arcball only gets the event if we're in world view
-	if (tw->worldCam->value())
-		if (arcball.handle(event)) 
-			return 1;
+	if (tw->worldCam->value()) {
+		//if (arcball.handle(event))
+		//	return 1;
+	}
+		
 
 	// remember what button was used
 	static int last_push;
@@ -96,7 +101,14 @@ int TrainView::handle(int event)
 				doPick();
 				damage(1);
 				return 1;
-			};
+			}else if (last_push == FL_RIGHT_MOUSE) {
+				int xpos = Fl::event_x();
+				int ypos = Fl::event_y();
+				lastX = xpos;
+				lastY = ypos;
+				damage(1);
+				return 1;
+			}
 			break;
 
 	   // Mouse button release event
@@ -126,6 +138,26 @@ int TrainView::handle(int event)
 				cp->pos.x = (float) rx;
 				cp->pos.y = (float) ry;
 				cp->pos.z = (float) rz;
+				damage(1);
+			}
+			else if (last_push == FL_RIGHT_MOUSE) {
+				// where is the mouse?
+				int xpos = Fl::event_x();
+				int ypos = Fl::event_y();
+				if (firstMouse)
+				{
+					lastX = xpos;
+					lastY = ypos;
+					firstMouse = false;
+				}
+
+				float xoffset = xpos - lastX;
+				float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+				lastX = xpos;
+				lastY = ypos;
+
+				camera.ProcessMouseMovement(xoffset, yoffset);
 				damage(1);
 			}
 			break;
@@ -158,6 +190,23 @@ int TrainView::handle(int event)
 
 					return 1;
 				};
+				if (k == 'w') {
+					camera.ProcessKeyboard(FORWARD, delta_t);
+					damage(1);
+				}
+				if (k == 's') {
+					camera.ProcessKeyboard(BACKWARD, delta_t);
+					damage(1);
+				}
+				if (k == 'a') {
+					camera.ProcessKeyboard(LEFT, delta_t);
+					damage(1);
+				}
+				if (k == 'd') {
+					camera.ProcessKeyboard(RIGHT, delta_t);
+					damage(1);
+				}
+				//cout << camera.Position.x << " " << camera.Position.y << " " << camera.Position.z << endl;
 				break;
 	}
 
@@ -168,12 +217,21 @@ int TrainView::handle(int event)
 //   it puts a lot of the work into other routines to simplify things
 void TrainView::draw()
 {
+	//calculate delta time
+	updateTimer();
+
 	// * Set up basic opengl informaiton
 	//initialized glad
 	if (gladLoadGL())
 	{
 		//initiailize VAO, VBO, Shader...
-		shader = new Shader("../src/shaders/simple.vert", "../src/shaders/simple.frag");
+		if (!main_shader) {
+			main_shader = new Shader("../src/shaders/basic_lighting.vs", "../src/shaders/basic_lighting.fs");
+		}
+
+		if (!light_source_shader) {
+			light_source_shader = new Shader("../src/shaders/light_cube.vs", "../src/shaders/light_cube.fs");
+		}
 
 		if (!this->test_model) {
 			test_model = new Model(FileSystem::getPath("resources/objects/Sci_fi_Train/Sci_fi_Train.obj"));
@@ -413,28 +471,42 @@ void TrainView::draw()
 		GL_UNIFORM_BUFFER, /*binding point*/0, this->commom_matrices->ubo, 0, this->commom_matrices->size);
 
 	//bind shader
-	shader->use();
+	main_shader->use();
 
 	glm::mat4 model_matrix = glm::mat4();
 	model_matrix = glm::translate(model_matrix, this->source_pos);
 	model_matrix = glm::scale(model_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
 	//glUniformMatrix4fv(glGetUniformLocation(this->shader->Program, "u_model"), 1, GL_FALSE, );
-	shader->setMat4("u_model", model_matrix);
+	//main_shader->setMat4("u_model", model_matrix);
 	//glUniform3fv(glGetUniformLocation(this->shader->Program, "u_color"), 1, &glm::vec3(0.0f, 1.0f, 0.0f)[0]);
-	shader->setVec3("u_color", glm::vec3(0.0f, 1.0f, 0.0f));
+	//main_shader->setVec3("u_color", glm::vec3(0.0f, 1.0f, 0.0f));
 	this->texture->bind(0);
 	//glUniform1i(glGetUniformLocation(this->shader->Program, "u_texture"), 0);
-	shader->setInt("u_texture", 0);
+	main_shader->setInt("u_texture", 0);
+
+
+	// lighting
+	glm::vec3 lightPos(100.0f, 50.0f, 150.0f);
+	main_shader->setVec3("objectColor", 0.8f, 0.5f, 0.6f);
+	main_shader->setVec3("lightColor", 0.9f, 1.0f, 0.9f);
+	main_shader->setVec3("lightPos", lightPos);
+	main_shader->setVec3("viewPos", camera.Position);
+
+	// view/projection transformations
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, (float)NEAR, (float)FAR);
+	glm::mat4 view = camera.GetViewMatrix();
+	main_shader->setMat4("projection", projection);
+	main_shader->setMat4("view", view);
+	main_shader->setMat4("model", model_matrix);
+
 	
 	//bind VAO
 	glBindVertexArray(this->plane->vao);
 
 	glDrawElements(GL_TRIANGLES, this->plane->element_amount, GL_UNSIGNED_INT, 0);
 
-	test_model->Draw(*shader);
+	test_model->Draw(*main_shader);
 	model_matrix = glm::translate(model_matrix, glm::vec3(30.0f, 30, 30));
-	shader->setMat4("u_model", model_matrix);
-	test_model->Draw(*shader);
 
 	//unbind VAO
 	glBindVertexArray(0);
@@ -457,8 +529,9 @@ setProjection()
 	float aspect = static_cast<float>(w()) / static_cast<float>(h());
 
 	// Check whether we use the world camp
-	if (tw->worldCam->value())
-		arcball.setProjection(false);
+	if (tw->worldCam->value()) {
+		//arcball.setProjection(false);
+	}
 	// Or we use the top cam
 	else if (tw->topCam->value()) {
 		float wi, he;
@@ -470,7 +543,7 @@ setProjection()
 			he = 110;
 			wi = he * aspect;
 		}
-
+		
 		// Set up the top camera drop mode to be orthogonal and set
 		// up proper projection matrix
 		glMatrixMode(GL_PROJECTION);
@@ -624,4 +697,12 @@ void TrainView::setUBO()
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), &projection_matrix[0][0]);
 	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), &view_matrix[0][0]);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void TrainView::updateTimer() {
+	now_t = glutGet(GLUT_ELAPSED_TIME);
+	delta_t = (now_t - old_t) / 1000.0;
+	old_t = now_t;
+	//cout << "delta time: " << delta_t << endl;
+	//glutPostRedisplay();
 }
