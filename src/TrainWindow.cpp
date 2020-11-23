@@ -142,6 +142,19 @@ TrainWindow(const int x, const int y)
 
 		pty+=30;
 
+		// browser to select spline types
+		// TODO: make sure these choices are the same as what the code supports
+		lightBrowser = new Fl_Browser(605, pty, 120, 75, "Light Type");
+		lightBrowser->type(2);		// select
+		lightBrowser->callback((Fl_Callback*)damageCB, this);
+		lightBrowser->add("Directional");
+		lightBrowser->add("point");
+		lightBrowser->add("spot");
+		lightBrowser->select(1);
+
+		pty += 110;
+
+
 		// TODO: add widgets for all of your fancier features here
 #ifdef EXAMPLE_SOLUTION
 		makeExampleWidgets(this,pty);
@@ -198,6 +211,10 @@ advanceTrain(float dir)
 	//#####################################################################
 	// TODO: make this work for your train
 	//#####################################################################
+
+	
+
+
 #ifdef EXAMPLE_SOLUTION
 	// note - we give a little bit more example code here than normal,
 	// so you can see how this works

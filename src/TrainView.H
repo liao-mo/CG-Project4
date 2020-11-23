@@ -105,7 +105,10 @@ class TrainView : public Fl_Gl_Window
 		CTrack*			m_pTrack;		// The track of the entire scene
 
 		//shader objects
-		Shader* main_shader = nullptr;
+		Shader* basic_light_shader = nullptr;
+		Shader* directional_light_shader = nullptr;
+		Shader* point_light_shader = nullptr;
+		Shader* spot_light_shader = nullptr;
 		Shader* light_source_shader = nullptr;
 		Texture2D* texture	= nullptr;
 		VAO* plane			= nullptr;

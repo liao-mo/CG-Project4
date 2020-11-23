@@ -225,8 +225,20 @@ void TrainView::draw()
 	if (gladLoadGL())
 	{
 		//initiailize VAO, VBO, Shader...
-		if (!main_shader) {
-			main_shader = new Shader("../src/shaders/basic_lighting.vs", "../src/shaders/basic_lighting.fs");
+		if (!basic_light_shader) {
+			basic_light_shader = new Shader("../src/shaders/basic_lighting.vs", "../src/shaders/basic_lighting.fs");
+		}
+
+		if (!directional_light_shader) {
+			directional_light_shader = new Shader("../src/shaders/directional_light.vs", "../src/shaders/directional_light.fs");
+		}
+
+		if (!point_light_shader) {
+			point_light_shader = new Shader("../src/shaders/point_light.vs", "../src/shaders/point_light.fs");
+		}
+
+		if (!spot_light_shader) {
+			spot_light_shader = new Shader("../src/shaders/spot_light.vs", "../src/shaders/spot_light.fs");
 		}
 
 		if (!light_source_shader) {
@@ -366,6 +378,7 @@ void TrainView::draw()
 
 	// Set up the view port
 	glViewport(0,0,w(),h());
+	
 
 	// clear the window, be sure to clear the Z-Buffer too
 	glClearColor(0,0,.3f,0);		// background should be blue
@@ -408,23 +421,23 @@ void TrainView::draw()
 	// * set the light parameters
 	//
 	//**********************************************************************
-	GLfloat lightPosition1[]	= {0,1,1,0}; // {50, 200.0, 50, 1.0};
-	GLfloat lightPosition2[]	= {1, 0, 0, 0};
-	GLfloat lightPosition3[]	= {0, -1, 0, 0};
-	GLfloat yellowLight[]		= {0.5f, 0.5f, .1f, 1.0};
-	GLfloat whiteLight[]			= {1.0f, 1.0f, 1.0f, 1.0};
-	GLfloat blueLight[]			= {.1f,.1f,.3f,1.0};
-	GLfloat grayLight[]			= {.3f, .3f, .3f, 1.0};
+	//GLfloat lightPosition1[]	= {0,1,1,0}; // {50, 200.0, 50, 1.0};
+	//GLfloat lightPosition2[]	= {1, 0, 0, 0};
+	//GLfloat lightPosition3[]	= {0, -1, 0, 0};
+	//GLfloat yellowLight[]		= {0.5f, 0.5f, .1f, 1.0};
+	//GLfloat whiteLight[]			= {1.0f, 1.0f, 1.0f, 1.0};
+	//GLfloat blueLight[]			= {.1f,.1f,.3f,1.0};
+	//GLfloat grayLight[]			= {.3f, .3f, .3f, 1.0};
 
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition1);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, whiteLight);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, grayLight);
+	//glLightfv(GL_LIGHT0, GL_POSITION, lightPosition1);
+	//glLightfv(GL_LIGHT0, GL_DIFFUSE, whiteLight);
+	//glLightfv(GL_LIGHT0, GL_AMBIENT, grayLight);
 
-	glLightfv(GL_LIGHT1, GL_POSITION, lightPosition2);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, yellowLight);
+	//glLightfv(GL_LIGHT1, GL_POSITION, lightPosition2);
+	//glLightfv(GL_LIGHT1, GL_DIFFUSE, yellowLight);
 
-	glLightfv(GL_LIGHT2, GL_POSITION, lightPosition3);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, blueLight);
+	//glLightfv(GL_LIGHT2, GL_POSITION, lightPosition3);
+	//glLightfv(GL_LIGHT2, GL_DIFFUSE, blueLight);
 
 	// set linstener position 
 	if(selectedCube >= 0)
@@ -454,7 +467,7 @@ void TrainView::draw()
 	// now draw the object and we need to do it twice
 	// once for real, and then once for shadows
 	//*********************************************************************
-	glEnable(GL_LIGHTING);
+	//glEnable(GL_LIGHTING);
 	setupObjects();
 
 	drawStuff();
@@ -467,37 +480,121 @@ void TrainView::draw()
 	}
 
 	setUBO();
-	glBindBufferRange(
-		GL_UNIFORM_BUFFER, /*binding point*/0, this->commom_matrices->ubo, 0, this->commom_matrices->size);
+	glBindBufferRange(GL_UNIFORM_BUFFER, /*binding point*/0, this->commom_matrices->ubo, 0, this->commom_matrices->size);
 
 	//bind shader
-	main_shader->use();
+
 
 	glm::mat4 model_matrix = glm::mat4();
 	model_matrix = glm::translate(model_matrix, this->source_pos);
 	model_matrix = glm::scale(model_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
-	//glUniformMatrix4fv(glGetUniformLocation(this->shader->Program, "u_model"), 1, GL_FALSE, );
-	//main_shader->setMat4("u_model", model_matrix);
-	//glUniform3fv(glGetUniformLocation(this->shader->Program, "u_color"), 1, &glm::vec3(0.0f, 1.0f, 0.0f)[0]);
-	//main_shader->setVec3("u_color", glm::vec3(0.0f, 1.0f, 0.0f));
-	this->texture->bind(0);
-	//glUniform1i(glGetUniformLocation(this->shader->Program, "u_texture"), 0);
-	main_shader->setInt("u_texture", 0);
-
-
-	// lighting
-	glm::vec3 lightPos(100.0f, 50.0f, 150.0f);
-	main_shader->setVec3("objectColor", 0.8f, 0.5f, 0.6f);
-	main_shader->setVec3("lightColor", 0.9f, 1.0f, 0.9f);
-	main_shader->setVec3("lightPos", lightPos);
-	main_shader->setVec3("viewPos", camera.Position);
-
-	// view/projection transformations
 	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, (float)NEAR, (float)FAR);
 	glm::mat4 view = camera.GetViewMatrix();
-	main_shader->setMat4("projection", projection);
-	main_shader->setMat4("view", view);
-	main_shader->setMat4("model", model_matrix);
+	this->texture->bind(0);
+
+	////basic light
+	//basic_light_shader->use();	
+	//glm::vec3 lightPos(100.0f, 50.0f, 150.0f);
+	//basic_light_shader->setVec3("objectColor", 0.8f, 0.5f, 0.6f);
+	//basic_light_shader->setVec3("lightColor", 0.9f, 1.0f, 0.9f);
+	//basic_light_shader->setVec3("lightPos", lightPos);
+	//basic_light_shader->setVec3("viewPos", camera.Position);
+	//// view/projection transformations
+	//projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, (float)NEAR, (float)FAR);
+	//view = camera.GetViewMatrix();
+	//basic_light_shader->setMat4("projection", projection);
+	//basic_light_shader->setMat4("view", view);
+	//basic_light_shader->setMat4("model", model_matrix);
+
+	glm::mat4 model = glm::mat4(1.0f);
+
+	//directional light
+	if (tw->lightBrowser->value() == 1) {
+		directional_light_shader->use();
+		directional_light_shader->setVec3("light.direction", -1.0f, -0.1f, -0.3f);
+		directional_light_shader->setVec3("viewPos", camera.Position);
+		// light properties
+		directional_light_shader->setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+		directional_light_shader->setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
+		directional_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		// material properties
+		directional_light_shader->setFloat("material.shininess", 32.0f);
+		// view/projection transformations
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)w() / (float)h(), (float)NEAR, (float)FAR);
+		view = camera.GetViewMatrix();
+		directional_light_shader->setMat4("projection", projection);
+		directional_light_shader->setMat4("view", view);
+		// world transformation
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
+		//model = glm::rotate(model, float(now_t/1000.0), glm::vec3(0, 1, 0));
+		directional_light_shader->setMat4("model", model);
+	}
+	
+	//point light
+	if (tw->lightBrowser->value() == 2) {
+		point_light_shader->use();
+		glm::vec3 lightPos(50.0f, 30.0f, 2.0f);
+		point_light_shader->setVec3("light.position", lightPos);
+		point_light_shader->setVec3("viewPos", camera.Position);
+
+		// light properties
+		point_light_shader->setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+		point_light_shader->setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+		point_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		point_light_shader->setFloat("light.constant", 0.01f);
+		point_light_shader->setFloat("light.linear", 0.001f);
+		point_light_shader->setFloat("light.quadratic", 0.001f);
+
+		// material properties
+		point_light_shader->setFloat("material.shininess", 32.0f);
+
+		// view/projection transformations
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)w() / (float)h(), (float)NEAR, (float)FAR);
+		view = camera.GetViewMatrix();
+		point_light_shader->setMat4("projection", projection);
+		point_light_shader->setMat4("view", view);
+
+		// world transformation
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
+		point_light_shader->setMat4("model", model);
+	}
+
+		//spot light
+	if (tw->lightBrowser->value() == 3) {
+		spot_light_shader->use();
+		spot_light_shader->setVec3("light.position", camera.Position);
+		spot_light_shader->setVec3("light.direction", camera.Front);
+		spot_light_shader->setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+		spot_light_shader->setVec3("viewPos", camera.Position);
+		// light properties
+		spot_light_shader->setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+		// we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
+		// each environment and lighting type requires some tweaking to get the best out of your environment.
+		spot_light_shader->setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
+		spot_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		spot_light_shader->setFloat("light.constant", 1.0f);
+		spot_light_shader->setFloat("light.linear", 0.09f);
+		spot_light_shader->setFloat("light.quadratic", 0.032f);
+		// material properties
+		spot_light_shader->setFloat("material.shininess", 32.0f);
+		// view/projection transformations
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)w() / (float)h(), (float)NEAR, (float)FAR);
+		view = camera.GetViewMatrix();
+		spot_light_shader->setMat4("projection", projection);
+		spot_light_shader->setMat4("view", view);
+		// world transformation
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
+		spot_light_shader->setMat4("model", model);
+	}
+	
+
+
+
+
+
 
 	
 	//bind VAO
@@ -505,7 +602,17 @@ void TrainView::draw()
 
 	glDrawElements(GL_TRIANGLES, this->plane->element_amount, GL_UNSIGNED_INT, 0);
 
-	test_model->Draw(*main_shader);
+	//test_model->Draw(*directional_light_shader);
+	if (tw->lightBrowser->value() == 1) {
+		test_model->Draw(*directional_light_shader);
+	}
+	else if (tw->lightBrowser->value() == 2) {
+		test_model->Draw(*point_light_shader);
+	}
+	else if (tw->lightBrowser->value() == 3) {
+		test_model->Draw(*spot_light_shader);
+	}
+	
 	model_matrix = glm::translate(model_matrix, glm::vec3(30.0f, 30, 30));
 
 	//unbind VAO
