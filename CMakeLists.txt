@@ -71,7 +71,8 @@ target_link_libraries(WaterSurface
     debug ${LIB_DIR}Debug/fltk_pngd.lib        optimized ${LIB_DIR}Release/fltk_png.lib
     debug ${LIB_DIR}Debug/fltk_zd.lib          optimized ${LIB_DIR}Release/fltk_z.lib
     debug ${LIB_DIR}Debug/fltkd.lib            optimized ${LIB_DIR}Release/fltk.lib
-    debug ${LIB_DIR}Debug/opencv_world341d.lib optimized ${LIB_DIR}Release/opencv_world341.lib)
+    debug ${LIB_DIR}Debug/opencv_world341d.lib optimized ${LIB_DIR}Release/opencv_world341.lib
+    debug ${LIB_DIR}Debug/freeglutd.lib        optimized ${LIB_DIR}Release/freeglut.lib)
 
 target_link_libraries(WaterSurface 
     ${LIB_DIR}OpenGL32.lib
@@ -80,7 +81,9 @@ target_link_libraries(WaterSurface
     ${LIB_DIR}ex-common.lib
     ${LIB_DIR}OpenAL32.lib
     ${LIB_DIR}alut.lib
-    ${LIB_DIR}alut_static.lib)
+    ${LIB_DIR}alut_static.lib
+    ${LIB_DIR}assimp.lib
+    ${LIB_DIR}STB_IMAGE.lib)
 
 target_link_libraries(WaterSurface Utilities)
     
