@@ -403,29 +403,6 @@ void TrainView::draw()
 		glEnable(GL_LIGHT2);
 	}
 
-	//*********************************************************************
-	//
-	// * set the light parameters
-	//
-	//**********************************************************************
-	//GLfloat lightPosition1[]	= {0,1,1,0}; // {50, 200.0, 50, 1.0};
-	//GLfloat lightPosition2[]	= {1, 0, 0, 0};
-	//GLfloat lightPosition3[]	= {0, -1, 0, 0};
-	//GLfloat yellowLight[]		= {0.5f, 0.5f, .1f, 1.0};
-	//GLfloat whiteLight[]			= {1.0f, 1.0f, 1.0f, 1.0};
-	//GLfloat blueLight[]			= {.1f,.1f,.3f,1.0};
-	//GLfloat grayLight[]			= {.3f, .3f, .3f, 1.0};
-
-	//glLightfv(GL_LIGHT0, GL_POSITION, lightPosition1);
-	//glLightfv(GL_LIGHT0, GL_DIFFUSE, whiteLight);
-	//glLightfv(GL_LIGHT0, GL_AMBIENT, grayLight);
-
-	//glLightfv(GL_LIGHT1, GL_POSITION, lightPosition2);
-	//glLightfv(GL_LIGHT1, GL_DIFFUSE, yellowLight);
-
-	//glLightfv(GL_LIGHT2, GL_POSITION, lightPosition3);
-	//glLightfv(GL_LIGHT2, GL_DIFFUSE, blueLight);
-
 	// set linstener position 
 	if(selectedCube >= 0)
 		alListener3f(AL_POSITION, 
@@ -515,6 +492,7 @@ void TrainView::draw()
 		model = glm::mat4(1.0f);
 		model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
 		//model = glm::rotate(model, float(now_t/1000.0), glm::vec3(0, 1, 0));
+		//model = glm::rotate(model, float(now_t / 1000.0), glm::vec3(0, 0, 1));
 		directional_light_shader->setMat4("model", model);
 	}
 	
