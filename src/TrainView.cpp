@@ -26,6 +26,7 @@ TrainView(int x, int y, int w, int h, const char* l) :
 	resetArcball();
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 	camera.MovementSpeed = 50.0f;
+	camera.Position = glm::vec3(50.0, 30.0, 0.0);
 	old_t = glutGet(GLUT_ELAPSED_TIME);
 	k_pressed = false;
 }
@@ -726,9 +727,9 @@ void TrainView::drawTrain() {
 void TrainView::drawWater() {
 	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, (float)NEAR, (float)FAR);
 	glm::mat4 view = camera.GetViewMatrix();
-	glm::mat4 model = glm::mat4(1);
+	glm::mat4 model = glm::mat4(1.0);
 	model = glm::translate(model, glm::vec3(0, 10, 0));
-	model = glm::scale(model, glm::vec3(3, 0, 3));
+	model = glm::scale(model, glm::vec3(20, 1, 20));
 
 	waterMesh->setEyePos(camera.Position);
 	waterMesh->setMVP(model, view, projection);
@@ -756,7 +757,7 @@ void TrainView::loadShaders() {
 
 void TrainView::loadModels() {
 	if (!sci_fi_train) {
-		sci_fi_train = new Model(FileSystem::getPath("resources/objects/Sci_fi_Train/Sci_fi_Train.obj"));
+		//sci_fi_train = new Model(FileSystem::getPath("resources/objects/Sci_fi_Train/Sci_fi_Train.obj"));
 	}
 }
 

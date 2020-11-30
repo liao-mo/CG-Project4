@@ -20,12 +20,7 @@ uniform float speed[8];
 uniform vec2 direction[8];
 uniform vec3 EyePos;
 
-out vec3 pos;
-out vec3 nor;
 
-out vec3 pos_eye;
-out vec3 n_eye;
-out mat4 V;
 
 float wave(int i, float x, float y) {
     float frequency = 2*pi/wavelength[i];
@@ -71,22 +66,14 @@ vec3 waveNormal(float x, float y) {
 
 void main()
 {
-    //vUV1 = uv+time*vec2(1.0,0)*0.1;
-    //vUV2 = uv+time*vec2(1.0,0)*-0.1;
-    //
-    ////height map
-    //vec3 heightmapCol = vec3(texture2D(heightmap,vUV1));
-    //float bright = mix(heightmapCol.x,heightmapCol.y,heightmapCol.z);
-    //bright = bright * 4 - 2;
+    vec3 temp_pos;
 
-    V = view * model;
-    pos = aPos;
-    pos.y = waveHeight(pos.x,pos.z);
-    nor = waveNormal(pos.x,pos.z);
-    gl_Position = projection * view * model * vec4(pos, 1.0);
-    nor = mat3(view * model) * nor;
 
-    pos_eye = vec3(view * model * vec4(pos,1.0));
-    //n_eye = vec3(ModelViewMatrix * vec4(0,1,0,0.0));
-    n_eye = nor;
+    temp_pos = aPos;
+    temp_pos.y = waveHeight(temp_pos.x,temp_pos.z);
+    FragPos = vec3(model * vec4(temp_pos, 1.0));
+    Normal = waveNormal(temp_pos.x,temp_pos.z);
+    Normal = mat3(transpose(inverse(model))) * Normal;
+
+    gl_Position = projection * view * model * vec4(temp_pos, 1.0);
 }
