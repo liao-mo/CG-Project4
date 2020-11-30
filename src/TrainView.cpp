@@ -17,8 +17,8 @@
 
 // Constructor to set up the GL window
 TrainView::
-TrainView(int x, int y, int w, int h, const char* l) : 
-	Fl_Gl_Window(x,y,w,h,l)
+TrainView(int x, int y, int w, int h, const char* l) :
+	Fl_Gl_Window(x, y, w, h, l)
 //========================================================================
 {
 	mode( FL_RGB|FL_ALPHA|FL_DOUBLE | FL_STENCIL );
@@ -187,6 +187,10 @@ void TrainView::draw()
 
 		//load models
 		loadModels();
+
+		//load water object
+		loadWaterMesh();
+		
 
 		if (!this->commom_matrices)
 			this->commom_matrices = new UBO();
@@ -403,8 +407,9 @@ void TrainView::draw()
 	drawGround();
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	drawTrain();
+	//drawTrain();
 	
+	drawWater();
 
 	//unbind VAO
 	glBindVertexArray(0);
@@ -718,6 +723,19 @@ void TrainView::drawTrain() {
 	sci_fi_train->Draw(*current_light_shader);
 }
 
+void TrainView::drawWater() {
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, (float)NEAR, (float)FAR);
+	glm::mat4 view = camera.GetViewMatrix();
+	glm::mat4 model = glm::mat4(1);
+	model = glm::translate(model, glm::vec3(0, 10, 0));
+	model = glm::scale(model, glm::vec3(3, 0, 3));
+
+	waterMesh->setEyePos(camera.Position);
+	waterMesh->setMVP(model, view, projection);
+
+	waterMesh->draw();
+}
+
 void TrainView::loadShaders() {
 	if (!directional_light_shader) {
 		directional_light_shader = new Shader("../src/shaders/directional_light.vert", "../src/shaders/directional_light.frag");
@@ -740,9 +758,6 @@ void TrainView::loadModels() {
 	if (!sci_fi_train) {
 		sci_fi_train = new Model(FileSystem::getPath("resources/objects/Sci_fi_Train/Sci_fi_Train.obj"));
 	}
-	if (!water_surface) {
-		water_surface = new Model(FileSystem::getPath("resources/objects/grid/grid.obj"));
-	}
 }
 
 void TrainView::loadTextures() {
@@ -750,4 +765,10 @@ void TrainView::loadTextures() {
 		ground_texture = new Texture2D("../Images/black_white_board.png");
 	if (!water_texture)
 		water_texture = new Texture2D("../Images/blue.png");
+}
+
+void TrainView::loadWaterMesh() {
+	if (!waterMesh) {
+		waterMesh = new WaterMesh(glm::vec3(0.0, 20.0, 0.0));
+	}
 }

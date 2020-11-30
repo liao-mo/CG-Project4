@@ -35,6 +35,8 @@
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
 
+#include "WaterMesh.h"
+
 
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
@@ -104,6 +106,9 @@ class TrainView : public Fl_Gl_Window
 
 		//draw train
 		void drawTrain();
+
+		//draw water
+		void drawWater();
 	public:
 		ArcBallCam		arcball;			// keep an ArcBall for the UI
 		int				selectedCube;  // simple - just remember which cube is selected
@@ -129,8 +134,11 @@ class TrainView : public Fl_Gl_Window
 
 		//models
 		Model* sci_fi_train = nullptr;
-		Model* water_surface = nullptr;
 		void loadModels();
+
+		//water
+		WaterMesh* waterMesh = nullptr;
+		void loadWaterMesh();
 
 		// camera
 		Camera camera;
