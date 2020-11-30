@@ -1,29 +1,3 @@
-/************************************************************************
-     File:        TrainView.H
-
-     Author:     
-                  Michael Gleicher, gleicher@cs.wisc.edu
-
-     Modifier
-                  Yu-Chi Lai, yu-chi@cs.wisc.edu
-     
-     Comment:     
-						The TrainView is the window that actually shows the 
-						train. Its a
-						GL display canvas (Fl_Gl_Window).  It is held within 
-						a TrainWindow
-						that is the outer window with all the widgets. 
-						The TrainView needs 
-						to be aware of the window - since it might need to 
-						check the widgets to see how to draw
-
-	  Note:        we need to have pointers to this, but maybe not know 
-						about it (beware circular references)
-
-     Platform:    Visio Studio.Net 2003/2005
-
-*************************************************************************/
-
 #pragma once
 
 #include "RenderUtilities/BufferObject.h"
@@ -46,14 +20,6 @@
 // Preclarify for preventing the compiler error
 class TrainWindow;
 class CTrack;
-
-
-//#######################################################################
-// TODO
-// You might change the TrainView in order to add different objects to
-// be drawn, or adjust the lighting, or ...
-//#######################################################################
-
 
 // The TrainView also needs to handle its user interface events.
 // since this is an FLTk Window, we need to include FlTk Headers

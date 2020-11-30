@@ -1,30 +1,3 @@
-/************************************************************************
-     File:        TrainWindow.H
-
-     Author:     
-                  Michael Gleicher, gleicher@cs.wisc.edu
-
-     Modifier
-                  Yu-Chi Lai, yu-chi@cs.wisc.edu
-     
-     Comment:     
-						this class defines the window in which the project 
-						runs - its the outer windows that contain all of 
-						the widgets, including the "TrainView" which has the 
-						actual OpenGL window in which the train is drawn
-
-						You might want to modify this class to add new widgets
-						for controlling	your train
-
-						This takes care of lots of things - including installing 
-						itself into the FlTk "idle" loop so that we get periodic 
-						updates (if we're running the train).
-
-
-     Platform:    Visio Studio.Net 2003/2005
-
-*************************************************************************/
-
 #include <FL/fl.h>
 #include <FL/Fl_Box.h>
 
