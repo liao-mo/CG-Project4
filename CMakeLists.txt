@@ -11,7 +11,15 @@ set(SRC_SHADER
     ${SRC_DIR}shaders/basic_lighting.vs
     ${SRC_DIR}shaders/basic_lighting.fs
     ${SRC_DIR}shaders/light_cube.vs
-    ${SRC_DIR}shaders/light_cube.fs)
+    ${SRC_DIR}shaders/light_cube.fs
+    ${SRC_DIR}shaders/directional_light.vs
+    ${SRC_DIR}shaders/directional_light.fs
+    ${SRC_DIR}shaders/point_light.vs
+    ${SRC_DIR}shaders/point_light.fs
+    ${SRC_DIR}shaders/spot_light.vs
+    ${SRC_DIR}shaders/spot_light.fs
+    ${SRC_DIR}shaders/water_surface.vs
+    ${SRC_DIR}shaders/water_surface.fs)
 
 set(SRC_RENDER_UTILITIES
     ${SRC_DIR}RenderUtilities/BufferObject.h

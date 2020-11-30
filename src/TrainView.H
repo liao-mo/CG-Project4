@@ -97,6 +97,13 @@ class TrainView : public Fl_Gl_Window
 
 		//set ubo
 		void setUBO();
+
+		//draw object functions
+		//draw ground
+		void drawGround();
+
+		//draw train
+		void drawTrain();
 	public:
 		ArcBallCam		arcball;			// keep an ArcBall for the UI
 		int				selectedCube;  // simple - just remember which cube is selected
@@ -105,17 +112,25 @@ class TrainView : public Fl_Gl_Window
 		CTrack*			m_pTrack;		// The track of the entire scene
 
 		//shader objects
-		Shader* basic_light_shader = nullptr;
+		Shader* current_light_shader = nullptr;
 		Shader* directional_light_shader = nullptr;
 		Shader* point_light_shader = nullptr;
 		Shader* spot_light_shader = nullptr;
 		Shader* light_source_shader = nullptr;
-		Texture2D* texture	= nullptr;
+		void loadShaders();
+		void update_light_shaders();
+
+		//textures
+		Texture2D* ground_texture	= nullptr;
+		Texture2D* water_texture = nullptr;
 		VAO* plane			= nullptr;
 		UBO* commom_matrices= nullptr;
+		void loadTextures();
 
 		//models
-		Model* test_model = nullptr;
+		Model* sci_fi_train = nullptr;
+		Model* water_surface = nullptr;
+		void loadModels();
 
 		// camera
 		Camera camera;

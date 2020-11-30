@@ -1,29 +1,3 @@
-/************************************************************************
-     File:        TrainView.cpp
-
-     Author:     
-                  Michael Gleicher, gleicher@cs.wisc.edu
-
-     Modifier
-                  Yu-Chi Lai, yu-chi@cs.wisc.edu
-     
-     Comment:     
-						The TrainView is the window that actually shows the 
-						train. Its a
-						GL display canvas (Fl_Gl_Window).  It is held within 
-						a TrainWindow
-						that is the outer window with all the widgets. 
-						The TrainView needs 
-						to be aware of the window - since it might need to 
-						check the widgets to see how to draw
-
-	  Note:        we need to have pointers to this, but maybe not know 
-						about it (beware circular references)
-
-     Platform:    Visio Studio.Net 2003/2005
-
-*************************************************************************/
-
 #include <iostream>
 #include <Fl/fl.h>
 
@@ -187,7 +161,7 @@ int TrainView::handle(int event)
 
 	case 9:
 		k_pressed = false;
-		cout << "key up" << endl;
+		//cout << "key up" << endl;
 		break;
 	}
 
@@ -207,29 +181,12 @@ void TrainView::draw()
 	if (gladLoadGL())
 	{
 		//initiailize VAO, VBO, Shader...
-		if (!basic_light_shader) {
-			basic_light_shader = new Shader("../src/shaders/basic_lighting.vs", "../src/shaders/basic_lighting.fs");
-		}
+		
+		//load shaders
+		loadShaders();
 
-		if (!directional_light_shader) {
-			directional_light_shader = new Shader("../src/shaders/directional_light.vs", "../src/shaders/directional_light.fs");
-		}
-
-		if (!point_light_shader) {
-			point_light_shader = new Shader("../src/shaders/point_light.vs", "../src/shaders/point_light.fs");
-		}
-
-		if (!spot_light_shader) {
-			spot_light_shader = new Shader("../src/shaders/spot_light.vs", "../src/shaders/spot_light.fs");
-		}
-
-		if (!light_source_shader) {
-			light_source_shader = new Shader("../src/shaders/light_cube.vs", "../src/shaders/light_cube.fs");
-		}
-
-		if (!this->test_model) {
-			test_model = new Model(FileSystem::getPath("resources/objects/Sci_fi_Train/Sci_fi_Train.obj"));
-		}
+		//load models
+		loadModels();
 
 		if (!this->commom_matrices)
 			this->commom_matrices = new UBO();
@@ -293,9 +250,8 @@ void TrainView::draw()
 			glBindVertexArray(0);
 		}
 
-		if (!this->texture)
-			this->texture = new Texture2D("../Images/church.png");
-
+		loadTextures();
+		
 		if (!this->device){
 			//Tutorial: https://ffainelli.github.io/openal-example/
 			this->device = alcOpenDevice(NULL);
@@ -392,16 +348,6 @@ void TrainView::draw()
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-
-	// top view only needs one light
-	if (tw->topCam->value()) {
-		glDisable(GL_LIGHT1);
-		glDisable(GL_LIGHT2);
-	} else {
-		glEnable(GL_LIGHT1);
-		glEnable(GL_LIGHT2);
-	}
 
 	// set linstener position 
 	if(selectedCube >= 0)
@@ -424,7 +370,7 @@ void TrainView::draw()
 
 	setupFloor();
 	glDisable(GL_LIGHTING);
-	drawFloor(200,10);
+	//drawFloor(200,10);
 
 
 	//*********************************************************************
@@ -434,151 +380,31 @@ void TrainView::draw()
 	//glEnable(GL_LIGHTING);
 	setupObjects();
 
-	drawStuff();
+	//drawStuff();
 
 	// this time drawing is for shadows (except for top view)
 	if (!tw->topCam->value()) {
 		setupShadows();
-		drawStuff(true);
+		//drawStuff(true);
 		unsetupShadows();
 	}
 
 	setUBO();
 	glBindBufferRange(GL_UNIFORM_BUFFER, /*binding point*/0, this->commom_matrices->ubo, 0, this->commom_matrices->size);
 
-	//bind shader
-
-
-	glm::mat4 model_matrix = glm::mat4();
-	model_matrix = glm::translate(model_matrix, this->source_pos);
-	model_matrix = glm::scale(model_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
-	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, (float)NEAR, (float)FAR);
-	glm::mat4 view = camera.GetViewMatrix();
-	this->texture->bind(0);
-
-	////basic light
-	//basic_light_shader->use();	
-	//glm::vec3 lightPos(100.0f, 50.0f, 150.0f);
-	//basic_light_shader->setVec3("objectColor", 0.8f, 0.5f, 0.6f);
-	//basic_light_shader->setVec3("lightColor", 0.9f, 1.0f, 0.9f);
-	//basic_light_shader->setVec3("lightPos", lightPos);
-	//basic_light_shader->setVec3("viewPos", camera.Position);
-	//// view/projection transformations
-	//projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, (float)NEAR, (float)FAR);
-	//view = camera.GetViewMatrix();
-	//basic_light_shader->setMat4("projection", projection);
-	//basic_light_shader->setMat4("view", view);
-	//basic_light_shader->setMat4("model", model_matrix);
-
-	glm::mat4 model = glm::mat4(1.0f);
-
-	//directional light
-	if (tw->lightBrowser->value() == 1) {
-		directional_light_shader->use();
-		directional_light_shader->setVec3("light.direction", -1.0f, -0.1f, -0.3f);
-		directional_light_shader->setVec3("viewPos", camera.Position);
-		// light properties
-		directional_light_shader->setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
-		directional_light_shader->setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
-		directional_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-		// material properties
-		directional_light_shader->setFloat("material.shininess", 32.0f);
-		// view/projection transformations
-		projection = glm::perspective(glm::radians(camera.Zoom), (float)w() / (float)h(), (float)NEAR, (float)FAR);
-		view = camera.GetViewMatrix();
-		directional_light_shader->setMat4("projection", projection);
-		directional_light_shader->setMat4("view", view);
-		// world transformation
-		model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
-		//model = glm::rotate(model, float(now_t/1000.0), glm::vec3(0, 1, 0));
-		//model = glm::rotate(model, float(now_t / 1000.0), glm::vec3(0, 0, 1));
-		directional_light_shader->setMat4("model", model);
-	}
-	
-	//point light
-	if (tw->lightBrowser->value() == 2) {
-		point_light_shader->use();
-		glm::vec3 lightPos(50.0f, 30.0f, 2.0f);
-		point_light_shader->setVec3("light.position", lightPos);
-		point_light_shader->setVec3("viewPos", camera.Position);
-
-		// light properties
-		point_light_shader->setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-		point_light_shader->setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-		point_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-		point_light_shader->setFloat("light.constant", 0.01f);
-		point_light_shader->setFloat("light.linear", 0.001f);
-		point_light_shader->setFloat("light.quadratic", 0.001f);
-
-		// material properties
-		point_light_shader->setFloat("material.shininess", 32.0f);
-
-		// view/projection transformations
-		projection = glm::perspective(glm::radians(camera.Zoom), (float)w() / (float)h(), (float)NEAR, (float)FAR);
-		view = camera.GetViewMatrix();
-		point_light_shader->setMat4("projection", projection);
-		point_light_shader->setMat4("view", view);
-
-		// world transformation
-		model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
-		point_light_shader->setMat4("model", model);
-	}
-
-		//spot light
-	if (tw->lightBrowser->value() == 3) {
-		spot_light_shader->use();
-		spot_light_shader->setVec3("light.position", camera.Position);
-		spot_light_shader->setVec3("light.direction", camera.Front);
-		spot_light_shader->setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
-		spot_light_shader->setVec3("viewPos", camera.Position);
-		// light properties
-		spot_light_shader->setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
-		// we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
-		// each environment and lighting type requires some tweaking to get the best out of your environment.
-		spot_light_shader->setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
-		spot_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-		spot_light_shader->setFloat("light.constant", 1.0f);
-		spot_light_shader->setFloat("light.linear", 0.09f);
-		spot_light_shader->setFloat("light.quadratic", 0.032f);
-		// material properties
-		spot_light_shader->setFloat("material.shininess", 32.0f);
-		// view/projection transformations
-		projection = glm::perspective(glm::radians(camera.Zoom), (float)w() / (float)h(), (float)NEAR, (float)FAR);
-		view = camera.GetViewMatrix();
-		spot_light_shader->setMat4("projection", projection);
-		spot_light_shader->setMat4("view", view);
-		// world transformation
-		model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
-		spot_light_shader->setMat4("model", model);
-	}
 	
 
+	//bind plane texture
+	this->ground_texture->bind(0);
 
+	//update current light_shader
+	update_light_shaders();
 
+	drawGround();
 
-
-
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	drawTrain();
 	
-	//bind VAO
-	glBindVertexArray(this->plane->vao);
-
-	glDrawElements(GL_TRIANGLES, this->plane->element_amount, GL_UNSIGNED_INT, 0);
-
-	//test_model->Draw(*directional_light_shader);
-	if (tw->lightBrowser->value() == 1) {
-		test_model->Draw(*directional_light_shader);
-	}
-	else if (tw->lightBrowser->value() == 2) {
-		test_model->Draw(*point_light_shader);
-	}
-	else if (tw->lightBrowser->value() == 3) {
-		test_model->Draw(*spot_light_shader);
-	}
-	
-	model_matrix = glm::translate(model_matrix, glm::vec3(30.0f, 30, 30));
 
 	//unbind VAO
 	glBindVertexArray(0);
@@ -587,15 +413,11 @@ void TrainView::draw()
 	glUseProgram(0);
 }
 
-//************************************************************************
-//
 // * This sets up both the Projection and the ModelView matrices
 //   HOWEVER: it doesn't clear the projection first (the caller handles
 //   that) - its important for picking
-//========================================================================
 void TrainView::
 setProjection()
-//========================================================================
 {
 	// Compute the aspect ratio (we'll need it)
 	float aspect = static_cast<float>(w()) / static_cast<float>(h());
@@ -631,24 +453,13 @@ setProjection()
 	// put code for train view projection here!	
 	//####################################################################
 	else {
-#ifdef EXAMPLE_SOLUTION
-		trainCamView(this,aspect);
-#endif
+
 	}
 }
 
-//************************************************************************
-//
-// * this draws all of the stuff in the world
-//
 //	NOTE: if you're drawing shadows, DO NOT set colors (otherwise, you get 
 //       colored shadows). this gets called twice per draw 
 //       -- once for the objects, once for the shadows
-//########################################################################
-// TODO: 
-// if you have other objects in the world, make sure to draw them
-//########################################################################
-//========================================================================
 void TrainView::drawStuff(bool doingShadows)
 {
 	// Draw the control points
@@ -671,34 +482,21 @@ void TrainView::drawStuff(bool doingShadows)
 	// call your own track drawing code
 	//####################################################################
 
-#ifdef EXAMPLE_SOLUTION
-	drawTrack(this, doingShadows);
-#endif
 
 	// draw the train
 	//####################################################################
 	// TODO: 
 	//	call your own train drawing code
 	//####################################################################
-#ifdef EXAMPLE_SOLUTION
-	// don't draw the train if you're looking out the front window
-	if (!tw->trainCam->value())
-		drawTrain(this, doingShadows);
-#endif
+
 }
 
-// 
-//************************************************************************
-//
 // * this tries to see which control point is under the mouse
 //	  (for when the mouse is clicked)
 //		it uses OpenGL picking - which is always a trick
-//########################################################################
 // TODO: 
 //		if you want to pick things other than control points, or you
 //		changed how control points are drawn, you might need to change this
-//########################################################################
-//========================================================================
 void TrainView::
 doPick()
 //========================================================================
@@ -776,8 +574,6 @@ void TrainView::updateTimer() {
 	now_t = glutGet(GLUT_ELAPSED_TIME);
 	delta_t = (now_t - old_t) / 1000.0;
 	old_t = now_t;
-	//cout << "delta time: " << delta_t << endl;
-	//glutPostRedisplay();
 }
 
 void TrainView::updata_camera() {
@@ -801,4 +597,157 @@ void TrainView::updata_camera() {
 	}
 	
 	//cout << camera.Position.x << " " << camera.Position.y << " " << camera.Position.z << endl;
+}
+
+void TrainView::update_light_shaders() {
+	//set the selected lighting shader
+	if (tw->lightBrowser->value() == 1) {
+		current_light_shader = directional_light_shader;
+	}
+	else if (tw->lightBrowser->value() == 2) {
+		current_light_shader = point_light_shader;
+	}
+	else if (tw->lightBrowser->value() == 3) {
+		current_light_shader = spot_light_shader;
+	}
+
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, (float)NEAR, (float)FAR);
+	glm::mat4 view = camera.GetViewMatrix();
+	glm::mat4 model = glm::mat4(1.0f);
+
+	//directional light
+	if (tw->lightBrowser->value() == 1) {
+		directional_light_shader->use();
+		directional_light_shader->setVec3("light.direction", -1.0f, -0.1f, -0.3f);
+		directional_light_shader->setVec3("viewPos", camera.Position);
+		// light properties
+		directional_light_shader->setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+		directional_light_shader->setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
+		directional_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		// material properties
+		directional_light_shader->setFloat("material.shininess", 32.0f);
+		// view/projection transformations
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)w() / (float)h(), (float)NEAR, (float)FAR);
+		view = camera.GetViewMatrix();
+		directional_light_shader->setMat4("projection", projection);
+		directional_light_shader->setMat4("view", view);
+		// world transformation
+		//model = glm::mat4(1.0f);
+		//model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
+		//directional_light_shader->setMat4("model", model);
+	}
+
+	//point light
+	if (tw->lightBrowser->value() == 2) {
+		point_light_shader->use();
+		glm::vec3 lightPos(50.0f, 30.0f, 2.0f);
+		point_light_shader->setVec3("light.position", lightPos);
+		point_light_shader->setVec3("viewPos", camera.Position);
+
+		// light properties
+		point_light_shader->setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+		point_light_shader->setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+		point_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		point_light_shader->setFloat("light.constant", 0.01f);
+		point_light_shader->setFloat("light.linear", 0.001f);
+		point_light_shader->setFloat("light.quadratic", 0.001f);
+
+		// material properties
+		point_light_shader->setFloat("material.shininess", 32.0f);
+
+		// view/projection transformations
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)w() / (float)h(), (float)NEAR, (float)FAR);
+		view = camera.GetViewMatrix();
+		point_light_shader->setMat4("projection", projection);
+		point_light_shader->setMat4("view", view);
+
+		// world transformation
+		//model = glm::mat4(1.0f);
+		//model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
+		//point_light_shader->setMat4("model", model);
+	}
+
+	//spot light
+	if (tw->lightBrowser->value() == 3) {
+		spot_light_shader->use();
+		spot_light_shader->setVec3("light.position", camera.Position);
+		spot_light_shader->setVec3("light.direction", camera.Front);
+		spot_light_shader->setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+		spot_light_shader->setVec3("viewPos", camera.Position);
+		// light properties
+		spot_light_shader->setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+		// we configure the diffuse intensity slightly higher; the right lighting conditions differ with each lighting method and environment.
+		// each environment and lighting type requires some tweaking to get the best out of your environment.
+		spot_light_shader->setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
+		spot_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		spot_light_shader->setFloat("light.constant", 1.0f);
+		spot_light_shader->setFloat("light.linear", 0.09f);
+		spot_light_shader->setFloat("light.quadratic", 0.032f);
+		// material properties
+		spot_light_shader->setFloat("material.shininess", 32.0f);
+		// view/projection transformations
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)w() / (float)h(), (float)NEAR, (float)FAR);
+		view = camera.GetViewMatrix();
+		spot_light_shader->setMat4("projection", projection);
+		spot_light_shader->setMat4("view", view);
+		// world transformation
+		//model = glm::mat4(1.0f);
+		//model = glm::scale(model, glm::vec3(5.0, 5.0, 5.0));
+		//spot_light_shader->setMat4("model", model);
+	}
+}
+
+void TrainView::drawGround() {
+	// world transformation
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::scale(model, glm::vec3(500.0, 1.0, 500.0));
+	current_light_shader->setMat4("model", model);
+
+	//bind VAO and draw plane
+	glBindVertexArray(this->plane->vao);
+	glDrawElements(GL_TRIANGLES, this->plane->element_amount, GL_UNSIGNED_INT, 0);
+}
+
+void TrainView::drawTrain() {
+	
+	// world transformation
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::scale(model, glm::vec3(1,1,1));
+	current_light_shader->setMat4("model", model);
+
+	sci_fi_train->Draw(*current_light_shader);
+}
+
+void TrainView::loadShaders() {
+	if (!directional_light_shader) {
+		directional_light_shader = new Shader("../src/shaders/directional_light.vert", "../src/shaders/directional_light.frag");
+	}
+
+	if (!point_light_shader) {
+		point_light_shader = new Shader("../src/shaders/point_light.vert", "../src/shaders/point_light.frag");
+	}
+
+	if (!spot_light_shader) {
+		spot_light_shader = new Shader("../src/shaders/spot_light.vert", "../src/shaders/spot_light.frag");
+	}
+
+	if (!light_source_shader) {
+		light_source_shader = new Shader("../src/shaders/light_cube.vert", "../src/shaders/light_cube.frag");
+	}
+}
+
+void TrainView::loadModels() {
+	if (!sci_fi_train) {
+		sci_fi_train = new Model(FileSystem::getPath("resources/objects/Sci_fi_Train/Sci_fi_Train.obj"));
+	}
+	if (!water_surface) {
+		water_surface = new Model(FileSystem::getPath("resources/objects/grid/grid.obj"));
+	}
+}
+
+void TrainView::loadTextures() {
+	if (!ground_texture)
+		ground_texture = new Texture2D("../Images/black_white_board.png");
+	if (!water_texture)
+		water_texture = new Texture2D("../Images/blue.png");
 }
