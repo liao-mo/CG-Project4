@@ -21,7 +21,9 @@ set(SRC_SHADER
     ${SRC_DIR}shaders/water_surface.vert
     ${SRC_DIR}shaders/water_surface.frag
     ${SRC_DIR}shaders/sky_box.vert
-    ${SRC_DIR}shaders/sky_box.frag)
+    ${SRC_DIR}shaders/sky_box.frag
+    ${SRC_DIR}shaders/water_heightMap.vert
+    ${SRC_DIR}shaders/water_heightMap.frag)
 
 set(SRC_RENDER_UTILITIES
     ${SRC_DIR}RenderUtilities/BufferObject.h

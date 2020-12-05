@@ -3,30 +3,19 @@
 
 using namespace std;
 
-WaterMesh::WaterMesh() :
-	waveCounter(0),
-	time(0),
-	position(glm::vec3(0, 0, 0)),
-	amplitude_coefficient(1.0)
-{
-	grid = new Model(FileSystem::getPath("resources/objects/grid/grid.obj"));
-	//Debug
-	//grid = new Model(FileSystem::getPath("resources/objects/grid/low_grid.obj"));
-	sinWave_shader = new Shader("../src/shaders/water_surface.vert", "../src/shaders/water_surface.frag");
-	initWaves();
-}
-
 WaterMesh::WaterMesh(glm::vec3 pos) :
 	waveCounter(0),
 	time(0),
 	position(pos),
 	amplitude_coefficient(1.0)
 {
-	grid = new Model(FileSystem::getPath("resources/objects/grid/grid.obj"));
-	//Debug
-	//grid = new Model(FileSystem::getPath("resources/objects/grid/low_grid.obj"));
+	//grid = new Model(FileSystem::getPath("resources/objects/grid/grid.obj"));
+	//Debug: low polygons for fast loading
+	grid = new Model(FileSystem::getPath("resources/objects/grid/low_grid.obj"));
 	sinWave_shader = new Shader("../src/shaders/water_surface.vert", "../src/shaders/water_surface.frag");
 	initWaves();
+
+	loadHeightMaps();
 }
 
 void WaterMesh::initWaves()
@@ -74,7 +63,16 @@ void WaterMesh::addTime(float delta_t) {
 	time += delta_t;
 }
 
-void WaterMesh::draw() {
+void WaterMesh::draw(bool mode) {
+	if (mode == 0) {
+		drawSineWave();
+	}
+	else if (mode == 1) {
+		drawHeightMap();
+	}
+}
+
+void WaterMesh::drawSineWave() {
 	sinWave_shader->use();
 	sinWave_shader->setMat4("model", modelMatrix);
 	sinWave_shader->setMat4("view", viewMatrix);
@@ -83,9 +81,18 @@ void WaterMesh::draw() {
 	sinWave_shader->setFloat("time", time);
 	sinWave_shader->setInt("numWaves", waveCounter);
 
-	glUniform1fv(glGetUniformLocation(sinWave_shader->ID, "amplitude"), MAX_WAVE, waves.amplitude);
-	glUniform1fv(glGetUniformLocation(sinWave_shader->ID, "wavelength"), MAX_WAVE, waves.waveLength);
-	glUniform1fv(glGetUniformLocation(sinWave_shader->ID, "speed"), MAX_WAVE, waves.speed);
+	GLfloat amplitude[MAX_WAVE];
+	GLfloat waveLength[MAX_WAVE];
+	GLfloat speed[MAX_WAVE];
+	for (int i = 0; i < MAX_WAVE; ++i) {
+		amplitude[i] = waves.amplitude[i] * amplitude_coefficient;
+		waveLength[i] = waves.waveLength[i] * waveLength_coefficient / 5.0;
+		speed[i] = waves.speed[i] * speed_coefficient / 5.0;
+	}
+
+	glUniform1fv(glGetUniformLocation(sinWave_shader->ID, "amplitude"), MAX_WAVE, amplitude);
+	glUniform1fv(glGetUniformLocation(sinWave_shader->ID, "wavelength"), MAX_WAVE, waveLength);
+	glUniform1fv(glGetUniformLocation(sinWave_shader->ID, "speed"), MAX_WAVE, speed);
 	for (int i = 0; i != MAX_WAVE; i++) {
 		string name = "direction[";
 		name += to_string(i);
@@ -107,5 +114,28 @@ void WaterMesh::draw() {
 	sinWave_shader->setFloat("material.shininess", 32.0f);
 
 	grid->Draw(*sinWave_shader);
+}
+
+void WaterMesh::loadHeightMaps() {
+	//we have 200 heightMap image in this case
+	const int HEIGHTMAP_NUM = 200;
+	heightMap_textures.resize(HEIGHTMAP_NUM);
+	for (int i = 0; i < HEIGHTMAP_NUM; ++i) {
+		string path = "../Images/heightMaps/";
+		string number;
+		if (i / 10 == 0) {
+			number = "00" + to_string(i);
+		}
+		else if (i / 100 == 0) {
+			number = "0" + to_string(i);
+		}
+		path = path + number + ".png";
+		heightMap_textures[i] = new Texture2D(path.c_str());
+	}
+}
+
+void WaterMesh::drawHeightMap() {
+
+
 }
 

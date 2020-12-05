@@ -14,6 +14,8 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 
+using namespace std;
+
 #define MAX_WAVE 8
 struct Wave
 {
@@ -26,32 +28,44 @@ struct Wave
 class WaterMesh
 {
 public:
-	WaterMesh();
 	WaterMesh(glm::vec3 position);
 
+	//shaders
 	Shader* sinWave_shader = nullptr;
+	Shader* heightMap_shader = nullptr;
+
+	//sine wave
+	void initWaves();
+	void addSineWave(float waveLength, float amplitude, float speed, glm::vec2 direction);
+	void drawSineWave();
 
 	Wave waves;
 	Model* grid;
-	void initWaves();
-	void addSineWave(float waveLength, float amplitude, float speed, glm::vec2 direction);
-	void draw();
-
 	int waveCounter;
-	float time;
-	glm::vec3 position;
-	glm::vec3 eyePos;
 
+	float amplitude_coefficient;
+	float waveLength_coefficient;
+	float speed_coefficient;
+
+	//height map
+	vector<Texture2D*> heightMap_textures;
+	void loadHeightMaps();
+
+	// mode 0: sin wave, mode 1: height map
+	void draw(bool mode);
 	void setMVP(glm::mat4 m, glm::mat4 v, glm::mat4 p);
 	void setEyePos(glm::vec3 eye_pos);
 	void addTime(float delta_t);
 
+	float time;
+	glm::vec3 position;
+	glm::vec3 eyePos;
 	glm::mat4 modelMatrix;
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
 
-	float amplitude_coefficient;
 
+	void drawHeightMap();
 private:
 
 };

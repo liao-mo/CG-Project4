@@ -127,6 +127,24 @@ TrainWindow(const int x, const int y)
 
 		pty += 110;
 
+		pty += 25;
+		waterAmplitude = new Fl_Value_Slider(675, pty, 120, 20, "Amplitude");
+		waterAmplitude->range(0, 10);
+		waterAmplitude->value(1);
+		waterAmplitude->align(FL_ALIGN_LEFT);
+		waterAmplitude->type(FL_HORIZONTAL);
+		pty += 25;
+		waterWaveLength = new Fl_Value_Slider(675, pty, 120, 20, "Wave length");
+		waterWaveLength->range(0, 10);
+		waterWaveLength->value(5);
+		waterWaveLength->align(FL_ALIGN_LEFT);
+		waterWaveLength->type(FL_HORIZONTAL);
+		pty += 25;
+		waterSpeed = new Fl_Value_Slider(675, pty, 120, 20, "Wave Speed");
+		waterSpeed->range(0, 10);
+		waterSpeed->value(5);
+		waterSpeed->align(FL_ALIGN_LEFT);
+		waterSpeed->type(FL_HORIZONTAL);
 
 		// TODO: add widgets for all of your fancier features here
 

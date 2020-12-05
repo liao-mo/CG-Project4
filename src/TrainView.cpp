@@ -740,7 +740,11 @@ void TrainView::drawWater() {
 	waterMesh->setMVP(model, view, projection);
 	waterMesh->addTime(delta_t);
 
-	waterMesh->draw();
+	waterMesh->amplitude_coefficient = tw->waterAmplitude->value();
+	waterMesh->waveLength_coefficient = tw->waterWaveLength->value();
+	waterMesh->speed_coefficient = tw->waterSpeed->value();
+
+	waterMesh->draw(0);
 }
 
 void TrainView::drawSkyBox() {
