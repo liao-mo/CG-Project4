@@ -5,6 +5,7 @@
 #include "learnopengl/model.h"
 #include "learnopengl/filesystem.h"
 #include <learnopengl/shader_m.h>
+#include "RenderUtilities/Texture.h"
 
 
 #include <glad/glad.h>
@@ -28,7 +29,7 @@ public:
 	WaterMesh();
 	WaterMesh(glm::vec3 position);
 
-	Shader* water_shader = nullptr;
+	Shader* sinWave_shader = nullptr;
 
 	Wave waves;
 	Model* grid;
@@ -43,11 +44,13 @@ public:
 
 	void setMVP(glm::mat4 m, glm::mat4 v, glm::mat4 p);
 	void setEyePos(glm::vec3 eye_pos);
+	void addTime(float delta_t);
 
 	glm::mat4 modelMatrix;
 	glm::mat4 viewMatrix;
 	glm::mat4 projectionMatrix;
 
+	float amplitude_coefficient;
 
 private:
 

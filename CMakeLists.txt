@@ -19,7 +19,9 @@ set(SRC_SHADER
     ${SRC_DIR}shaders/spot_light.vert
     ${SRC_DIR}shaders/spot_light.frag
     ${SRC_DIR}shaders/water_surface.vert
-    ${SRC_DIR}shaders/water_surface.frag)
+    ${SRC_DIR}shaders/water_surface.frag
+    ${SRC_DIR}shaders/sky_box.vert
+    ${SRC_DIR}shaders/sky_box.frag)
 
 set(SRC_RENDER_UTILITIES
     ${SRC_DIR}RenderUtilities/BufferObject.h
@@ -47,6 +49,7 @@ add_executable(WaterSurface
     ${SRC_DIR}TrainView.h
     ${SRC_DIR}TrainWindow.h
     ${SRC_DIR}WaterMesh.h
+    ${SRC_DIR}SkyBox.h
 
     ${SRC_DIR}main.cpp
     ${SRC_DIR}CallBacks.cpp
@@ -55,6 +58,7 @@ add_executable(WaterSurface
     ${SRC_DIR}TrainView.cpp
     ${SRC_DIR}TrainWindow.cpp
     ${SRC_DIR}WaterMesh.cpp
+    ${SRC_DIR}SkyBox.cpp
 
     ${SRC_SHADER}
     ${SRC_RENDER_UTILITIES}

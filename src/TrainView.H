@@ -10,6 +10,7 @@
 #include <learnopengl/model.h>
 
 #include "WaterMesh.h"
+#include "SkyBox.h"
 
 
 #define SCR_WIDTH 800
@@ -72,9 +73,7 @@ class TrainView : public Fl_Gl_Window
 
 		//draw train
 		void drawTrain();
-
-		//draw water
-		void drawWater();
+		
 	public:
 		ArcBallCam		arcball;			// keep an ArcBall for the UI
 		int				selectedCube;  // simple - just remember which cube is selected
@@ -105,6 +104,12 @@ class TrainView : public Fl_Gl_Window
 		//water
 		WaterMesh* waterMesh = nullptr;
 		void loadWaterMesh();
+		void drawWater();
+
+		//skyBox
+		SkyBox* skyBox = nullptr;
+		void loadSkyBox();
+		void drawSkyBox();
 
 		// camera
 		Camera camera;
