@@ -729,7 +729,7 @@ void TrainView::drawWater() {
 	glm::mat4 view = camera.GetViewMatrix();
 	glm::mat4 model = glm::mat4(1.0);
 	model = glm::translate(model, glm::vec3(0, 10, 0));
-	model = glm::scale(model, glm::vec3(20, 1, 20));
+	model = glm::scale(model, glm::vec3(50, 1, 50));
 
 	waterMesh->setEyePos(camera.Position);
 	waterMesh->setMVP(model, view, projection);

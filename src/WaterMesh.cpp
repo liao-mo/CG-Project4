@@ -33,9 +33,9 @@ void WaterMesh::initWaves()
 		this->waves.direction[i] = glm::vec2(1, 0);
 	}
 
-	addSineWave(10, 3, 15, glm::vec2(1, 1));
-	addSineWave(10, 3, 15, glm::vec2(1, 0));
-	//addSineWave(30, 0.04, 20, glm::vec2(0, 1));
+	addSineWave(1, 2, 5, glm::vec2(1, 1));
+	addSineWave(2, 3, 3, glm::vec2(1, -1));
+	addSineWave(1, 1, 4, glm::vec2(2, 1));
 	//addSineWave(20, 0.05, 50, glm::vec2(1, -0.5));
 	//addSineWave(60, 0.2, 10, glm::vec2(-1.5, 0));
 }
