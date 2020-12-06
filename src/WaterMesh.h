@@ -17,6 +17,9 @@
 using namespace std;
 
 #define MAX_WAVE 8
+//we have 200 heightMap image in this case
+#define HEIGHTMAP_NUM 200
+
 struct Wave
 {
 	GLfloat waveLength[MAX_WAVE];
@@ -50,6 +53,7 @@ public:
 	//height map
 	vector<Texture2D*> heightMap_textures;
 	void loadHeightMaps();
+	int heightMap_counter = 0;
 
 	// mode 0: sin wave, mode 1: height map
 	void draw(bool mode);
@@ -57,7 +61,8 @@ public:
 	void setEyePos(glm::vec3 eye_pos);
 	void addTime(float delta_t);
 
-	float time;
+	float previousTime = 0;
+	float currentTime = 0;
 	glm::vec3 position;
 	glm::vec3 eyePos;
 	glm::mat4 modelMatrix;

@@ -402,8 +402,7 @@ void TrainView::draw()
 
 	
 
-	//bind plane texture
-	this->ground_texture->bind(0);
+	
 
 	//update current light_shader
 	update_light_shaders();
@@ -709,6 +708,8 @@ void TrainView::update_light_shaders() {
 }
 
 void TrainView::drawGround() {
+	//bind ground texture
+	ground_texture->bind(0);
 	// world transformation
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::scale(model, glm::vec3(500.0, 1.0, 500.0));
@@ -717,6 +718,7 @@ void TrainView::drawGround() {
 	//bind VAO and draw plane
 	glBindVertexArray(this->plane->vao);
 	glDrawElements(GL_TRIANGLES, this->plane->element_amount, GL_UNSIGNED_INT, 0);
+	ground_texture->unbind(0);
 }
 
 void TrainView::drawTrain() {
@@ -744,7 +746,7 @@ void TrainView::drawWater() {
 	waterMesh->waveLength_coefficient = tw->waterWaveLength->value();
 	waterMesh->speed_coefficient = tw->waterSpeed->value();
 
-	waterMesh->draw(0);
+	waterMesh->draw(1);
 }
 
 void TrainView::drawSkyBox() {

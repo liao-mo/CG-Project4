@@ -4,46 +4,51 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoords;
 
 out vec3 FragPos;
-out vec3 Normal;
-out vec2 TexCoords;
+smooth out vec3 Normal;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 const float pi = 3.14159;
-uniform float time;
 uniform vec3 EyePos;
 uniform sampler2D heightMap;
+uniform float amplitude;
 
-float waveHeight(float x, float y) {
-    float height = 0.0;
-//    for (int k = 0; k < numWaves; k++)
-//        height += wave(k, x, y);
+float waveHeight(vec2 texCoord) {
+    float height = vec3(texture(heightMap, texCoord)).r;
+    height = 100 * height * amplitude;
     return height;
 }
 
 
-vec3 waveNormal(float x, float y) {
-//    float dx = 0.0;
-//    float dy = 0.0;
-//    for (int i = 0; i < numWaves; ++i) {
-//        dx += dWavedx(i, x, y);
-//        dy += dWavedy(i, x, y);
-//    }
-    vec3 n = vec3(1.0, 1.0, 1.0);
-    return normalize(n);
+vec3 waveNormal(vec2 texCoord) {
+    vec3 n;
+    float dx = 0.01;
+    float dy = 0.01;
+
+    float heightL = waveHeight(vec2(texCoord[0] + dx, texCoord[1]));
+    float heightR = waveHeight(vec2(texCoord[0] - dx, texCoord[1]));
+    float heightT = waveHeight(vec2(texCoord[0], texCoord[1] - dy));
+    float heightB = waveHeight(vec2(texCoord[0], texCoord[1] + dy));
+
+    vec3 vertical = vec3(2 * dx,  heightL - heightR, 0);
+    vec3 horizontal = vec3(0, heightB - heightT, 2 * dy);
+    n = normalize(cross(vertical, horizontal));
+    if(amplitude == 0){
+        n = vec3(0,1,0);
+    }
+    return n;
 }
 
 void main()
 {
+    vec2 texture_coordinate = aTexCoords;
     vec3 temp_pos;
-
-
     temp_pos = aPos;
-    temp_pos.y = waveHeight(temp_pos.x,temp_pos.z);
+    temp_pos.y = waveHeight(texture_coordinate);
     FragPos = vec3(model * vec4(temp_pos, 1.0));
-    Normal = waveNormal(temp_pos.x,temp_pos.z);
+    Normal = waveNormal(texture_coordinate);
     Normal = mat3(transpose(inverse(model))) * Normal;
 
     gl_Position = projection * view * model * vec4(temp_pos, 1.0);
