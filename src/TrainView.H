@@ -99,7 +99,9 @@ class TrainView : public Fl_Gl_Window
 
 		//models
 		Model* sci_fi_train = nullptr;
+		Model* teapot = nullptr;
 		void loadModels();
+		void drawTeapot();
 
 		//water
 		WaterMesh* waterMesh = nullptr;

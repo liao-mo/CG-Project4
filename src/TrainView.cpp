@@ -26,7 +26,7 @@ TrainView(int x, int y, int w, int h, const char* l) :
 	resetArcball();
 	camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
 	camera.MovementSpeed = 200.0f;
-	camera.Position = glm::vec3(50.0, 30.0, 0.0);
+	camera.Position = glm::vec3(50.0, 100.0, 0.0);
 	old_t = glutGet(GLUT_ELAPSED_TIME);
 	k_pressed = false;
 }
@@ -410,7 +410,9 @@ void TrainView::draw()
 	//drawGround();
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	//drawTrain();
+	drawTrain();
+
+	drawTeapot();
 	
 	drawWater();
 
@@ -650,15 +652,15 @@ void TrainView::update_light_shaders() {
 	//point light
 	if (tw->lightBrowser->value() == 2) {
 		point_light_shader->use();
-		glm::vec3 lightPos(50.0f, 30.0f, 2.0f);
+		glm::vec3 lightPos(35.0f, 100.0f, 2.0f);
 		point_light_shader->setVec3("light.position", lightPos);
 		point_light_shader->setVec3("viewPos", camera.Position);
 
 		// light properties
 		point_light_shader->setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-		point_light_shader->setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+		point_light_shader->setVec3("light.diffuse", 0.9f, 0.9f, 0.9f);
 		point_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-		point_light_shader->setFloat("light.constant", 0.01f);
+		point_light_shader->setFloat("light.constant", 1.0f);
 		point_light_shader->setFloat("light.linear", 0.001f);
 		point_light_shader->setFloat("light.quadratic", 0.001f);
 
@@ -691,8 +693,8 @@ void TrainView::update_light_shaders() {
 		spot_light_shader->setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
 		spot_light_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 		spot_light_shader->setFloat("light.constant", 1.0f);
-		spot_light_shader->setFloat("light.linear", 0.09f);
-		spot_light_shader->setFloat("light.quadratic", 0.032f);
+		spot_light_shader->setFloat("light.linear", 0.05f);
+		spot_light_shader->setFloat("light.quadratic", 0.01f);
 		// material properties
 		spot_light_shader->setFloat("material.shininess", 32.0f);
 		// view/projection transformations
@@ -725,10 +727,22 @@ void TrainView::drawTrain() {
 	
 	// world transformation
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::scale(model, glm::vec3(1,1,1));
+	model = glm::translate(model, glm::vec3(0, 100, 0));
+	model = glm::scale(model, glm::vec3(10, 10, 10));
 	current_light_shader->setMat4("model", model);
 
 	sci_fi_train->Draw(*current_light_shader);
+}
+
+void TrainView::drawTeapot() {
+
+	// world transformation
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(100, 100, 0));
+	model = glm::scale(model, glm::vec3(10, 10, 10));
+	current_light_shader->setMat4("model", model);
+
+	teapot->Draw(*current_light_shader);
 }
 
 void TrainView::drawWater() {
@@ -746,7 +760,7 @@ void TrainView::drawWater() {
 	waterMesh->waveLength_coefficient = tw->waterWaveLength->value();
 	waterMesh->speed_coefficient = tw->waterSpeed->value();
 
-	waterMesh->draw(1);
+	waterMesh->draw(0);
 }
 
 void TrainView::drawSkyBox() {
@@ -778,7 +792,10 @@ void TrainView::loadShaders() {
 
 void TrainView::loadModels() {
 	if (!sci_fi_train) {
-		//sci_fi_train = new Model(FileSystem::getPath("resources/objects/Sci_fi_Train/Sci_fi_Train.obj"));
+		sci_fi_train = new Model(FileSystem::getPath("resources/objects/Sci_fi_Train/Sci_fi_Train.obj"));
+	}
+	if (!teapot) {
+		teapot = new Model(FileSystem::getPath("resources/objects/teapot/teapot.obj"));
 	}
 }
 
