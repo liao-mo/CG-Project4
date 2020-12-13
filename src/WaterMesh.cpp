@@ -10,9 +10,9 @@ WaterMesh::WaterMesh(glm::vec3 pos) :
 	position(pos),
 	amplitude_coefficient(1.0)
 {
-	grid = new Model(FileSystem::getPath("resources/objects/grid/grid.obj"));
+	//grid = new Model(FileSystem::getPath("resources/objects/grid/grid.obj"));
 	//Debug: low polygons for fast loading
-	//grid = new Model(FileSystem::getPath("resources/objects/grid/low_grid.obj"));
+	grid = new Model(FileSystem::getPath("resources/objects/grid/low_grid.obj"));
 	sinWave_shader = new Shader("../src/shaders/water_surface.vert", "../src/shaders/water_surface.frag");
 	heightMap_shader = new Shader("../src/shaders/water_heightMap.vert", "../src/shaders/water_heightMap.frag");
 

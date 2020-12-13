@@ -146,6 +146,35 @@ TrainWindow(const int x, const int y)
 		waterSpeed->align(FL_ALIGN_LEFT);
 		waterSpeed->type(FL_HORIZONTAL);
 
+		pty += 25;
+
+		// camera buttons - in a radio button group
+		Fl_Group* waveGroup = new Fl_Group(600, pty, 195, 20);
+		waveGroup->begin();
+		sineWave = new Fl_Button(605, pty, 100, 20, "Sine wave");
+		sineWave->type(FL_RADIO_BUTTON);		// radio button
+		sineWave->value(1);			// turned on
+		sineWave->selection_color((Fl_Color)3); // yellow when pressed
+		sineWave->callback((Fl_Callback*)damageCB, this);
+		HeightMap = new Fl_Button(710, pty, 100, 20, "Height map");
+		HeightMap->type(FL_RADIO_BUTTON);
+		HeightMap->value(0);
+		HeightMap->selection_color((Fl_Color)3);
+		HeightMap->callback((Fl_Callback*)damageCB, this);
+		waveGroup->end();
+
+		pty += 30;
+
+		pixelation = new Fl_Button(605, pty, 80, 20, "Pixelation");
+		togglify(pixelation);
+
+		pty += 30;
+
+		grayscale = new Fl_Button(605, pty, 80, 20, "Grayscale");
+		togglify(grayscale);
+
+		pty += 30;
+
 		// TODO: add widgets for all of your fancier features here
 
 

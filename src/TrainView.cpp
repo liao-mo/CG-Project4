@@ -15,6 +15,7 @@
 #include "Utilities/3DUtils.H"
 
 
+
 // Constructor to set up the GL window
 TrainView::
 TrainView(int x, int y, int w, int h, const char* l) :
@@ -29,6 +30,7 @@ TrainView(int x, int y, int w, int h, const char* l) :
 	camera.Position = glm::vec3(50.0, 100.0, 0.0);
 	old_t = glutGet(GLUT_ELAPSED_TIME);
 	k_pressed = false;
+	
 }
 
 // * Reset the camera to look at the world
@@ -194,6 +196,12 @@ void TrainView::draw()
 
 		//load skyBox object
 		loadSkyBox();
+
+		//initialize FBOs
+		initFBOs();
+
+		//initialize VAOs
+		initVAOs();
 		
 		//original stuff
 		if (!this->commom_matrices)
@@ -346,16 +354,10 @@ void TrainView::draw()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	setProjection();		// put the code to set up matrices here
-	
-
-	// TODO: 
-	// you might want to set the lighting up differently. if you do, 
-	// we need to set up the lights AFTER setting up the projection
 
 	// enable the lighting
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LIGHTING);
 
 	// set linstener position 
 	if(selectedCube >= 0)
@@ -400,23 +402,30 @@ void TrainView::draw()
 	setUBO();
 	glBindBufferRange(GL_UNIFORM_BUFFER, /*binding point*/0, this->commom_matrices->ubo, 0, this->commom_matrices->size);
 
-	
-
-	
-
 	//update current light_shader
 	update_light_shaders();
 
 	//drawGround();
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	drawTrain();
+	glViewport(0, 0, 1920,1080);
 
-	drawTeapot();
-	
-	drawWater();
+	drawMainFBO();
 
-	drawSkyBox();
+	//drawSubScreenFBO();
+
+	//drawTrain();
+
+	//drawTeapot();
+	//
+	//drawWater();
+
+	//drawSkyBox();
+
+	//draw main FBO to the whole screen
+	drawMainScreen();
+
+	drawSubScreen();
 
 	//unbind VAO
 	glBindVertexArray(0);
@@ -760,7 +769,10 @@ void TrainView::drawWater() {
 	waterMesh->waveLength_coefficient = tw->waterWaveLength->value();
 	waterMesh->speed_coefficient = tw->waterSpeed->value();
 
-	waterMesh->draw(0);
+	int waveType;
+	if (tw->sineWave->value()) waveType = 0;
+	else if (tw->HeightMap->value()) waveType = 1;
+	waterMesh->draw(waveType);
 }
 
 void TrainView::drawSkyBox() {
@@ -787,6 +799,14 @@ void TrainView::loadShaders() {
 
 	if (!light_source_shader) {
 		light_source_shader = new Shader("../src/shaders/light_cube.vert", "../src/shaders/light_cube.frag");
+	}
+
+	if (!mainScreen_shader) {
+		mainScreen_shader = new Shader("../src/shaders/main_screen.vert", "../src/shaders/main_screen.frag");
+	}
+
+	if (!subScreen_shader) {
+		subScreen_shader = new Shader("../src/shaders/sub_screen.vert", "../src/shaders/sub_screen.frag");
 	}
 }
 
@@ -816,4 +836,155 @@ void TrainView::loadSkyBox() {
 	if (!skyBox) {
 		skyBox = new SkyBox();
 	}
+}
+
+void TrainView::initVAOs() {
+	if (!this->mainScreenVAO) {
+		float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates. NOTE that this plane is now much smaller and at the top left of the screen
+			// positions   // texCoords
+			-1.0f,  1.0f,  0.0f, 1.0f,
+			-1.0f,  -1.0f,  0.0f, 0.0f,
+			 1.0f,  -1.0f,  1.0f, 0.0f,
+
+			-1.0f,  1.0f,  0.0f, 1.0f,
+			 1.0f,  -1.0f,  1.0f, 0.0f,
+			 1.0f,  1.0f,  1.0f, 1.0f
+		};
+
+		mainScreenVAO = new VAO;
+		mainScreenVAO->count = 6;
+		glGenVertexArrays(1, &mainScreenVAO->vao);
+		glGenBuffers(1, &mainScreenVAO->vbo[0]);
+		glBindVertexArray(mainScreenVAO->vao);
+		glBindBuffer(GL_ARRAY_BUFFER, mainScreenVAO->vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+		// Unbind VAO
+		glBindVertexArray(0);
+	}
+
+	if (!this->subScreenVAO) {
+		float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates. NOTE that this plane is now much smaller and at the top left of the screen
+			// positions   // texCoords
+			-0.5f,  1.0f,  0.0f, 1.0f,
+			-0.5f,  0.5f,  0.0f, 0.0f,
+			 0.0f,  0.5f,  1.0f, 0.0f,
+
+			-0.5f,  1.0f,  0.0f, 1.0f,
+			 0.0f,  0.5f,  1.0f, 0.0f,
+			 0.0f,  1.0f,  1.0f, 1.0f
+		};
+
+		subScreenVAO = new VAO;
+		subScreenVAO->count = 6;
+		glGenVertexArrays(1, &subScreenVAO->vao);
+		glGenBuffers(1, &subScreenVAO->vbo[0]);
+		glBindVertexArray(subScreenVAO->vao);
+		glBindBuffer(GL_ARRAY_BUFFER, subScreenVAO->vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+		// Unbind VAO
+		glBindVertexArray(0);
+	}
+}
+
+void TrainView::initFBOs() {
+	if (!mainFBO) {
+		mainFBO = new FrameBuffer();
+		mainFBO->init(TEXTURE_WIDTH, TEXTURE_HEIGHT);
+	}
+
+	if (!subScreenFBO) {
+		subScreenFBO = new FrameBuffer();
+		subScreenFBO->init(TEXTURE_WIDTH, TEXTURE_HEIGHT);
+	}
+}
+
+void TrainView::drawMainFBO() {
+	glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+	// set the rendering destination to FBO
+	mainFBO->bind();
+	// clear buffer
+	glClearColor(1, 1, 1, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	drawTrain();
+
+	drawTeapot();
+
+	drawWater();
+
+	drawSkyBox();
+	glBindVertexArray(0);
+
+	// if MSAA is on, explicitly copy multi-sample color/depth buffers to single-sample
+	// it also generates mipmaps of color texture object
+	mainFBO->update();
+
+	// back to normal window-system-provided framebuffer
+	mainFBO->unbind();
+}
+
+void TrainView::drawSubScreenFBO() {
+	glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+	// set the rendering destination to FBO
+	subScreenFBO->bind();
+	// clear buffer
+	glClearColor(1, 1, 1, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	drawTrain();
+
+	drawTeapot();
+
+	drawWater();
+
+	drawSkyBox();
+	glBindVertexArray(0);
+
+	// if MSAA is on, explicitly copy multi-sample color/depth buffers to single-sample
+	// it also generates mipmaps of color texture object
+	subScreenFBO->update();
+
+	// back to normal window-system-provided framebuffer
+	subScreenFBO->unbind();
+}
+
+void TrainView::drawMainScreen() {
+	glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+
+	mainScreen_shader->use();
+	mainScreen_shader->setFloat("vx_offset", 0.5);
+	mainScreen_shader->setFloat("rt_w", w());
+	mainScreen_shader->setFloat("rt_h", h());
+	mainScreen_shader->setFloat("pixel_w", 10.0);
+	mainScreen_shader->setFloat("pixel_h", 10.0);
+	mainScreen_shader->setBool("doPixelation", tw->pixelation->value());
+	mainScreen_shader->setBool("doGrayscale", tw->grayscale->value());
+	
+
+	glBindVertexArray(mainScreenVAO->vao);
+	glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+	glBindTexture(GL_TEXTURE_2D, mainFBO->getColorId());
+	//ground_texture->bind(0);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void TrainView::drawSubScreen() {
+	glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+
+	subScreen_shader->use();
+	glBindVertexArray(subScreenVAO->vao);
+	glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
+	glBindTexture(GL_TEXTURE_2D, mainFBO->getColorId());
+	//ground_texture->bind(0);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 }

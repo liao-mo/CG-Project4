@@ -11,12 +11,15 @@
 
 #include "WaterMesh.h"
 #include "SkyBox.h"
+#include "FrameBuffer.h"
 
 
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
 #define NEAR 0.01
 #define FAR 5000.0
+const int TEXTURE_WIDTH = 1920;  // NOTE: texture size cannot be larger than
+const int TEXTURE_HEIGHT = 1080;  // the rendering window size in non-FBO mode
 
 // Preclarify for preventing the compiler error
 class TrainWindow;
@@ -87,12 +90,30 @@ class TrainView : public Fl_Gl_Window
 		Shader* point_light_shader = nullptr;
 		Shader* spot_light_shader = nullptr;
 		Shader* light_source_shader = nullptr;
+		Shader* mainScreen_shader = nullptr;
+		Shader* subScreen_shader = nullptr;
 		void loadShaders();
 		void update_light_shaders();
+
+		//FBO
+		FrameBuffer* mainFBO = nullptr;
+		FrameBuffer* subScreenFBO = nullptr;
+		void initFBOs();
+		void drawMainFBO();
+		void drawSubScreenFBO();
+
+		//screens
+		VAO* mainScreenVAO = nullptr;
+		VAO* subScreenVAO = nullptr;
+		void initVAOs();
+		void drawMainScreen();
+		void drawSubScreen();
 
 		//textures
 		Texture2D* ground_texture	= nullptr;
 		Texture2D* water_texture = nullptr;
+
+		//plane
 		VAO* plane			= nullptr;
 		UBO* commom_matrices= nullptr;
 		void loadTextures();

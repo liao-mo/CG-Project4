@@ -98,9 +98,13 @@ class TrainWindow : public Fl_Double_Window {
 		Fl_Value_Slider* waterWaveLength;
 		Fl_Value_Slider* waterSpeed;
 
-		// we have other widgets as part of the sample solution
-		// this is not for 559 students to know about
-#ifdef EXAMPLE_SOLUTION
-	ExampleWidgets ew;
-#endif
+		// sine wave or height map
+		Fl_Button* sineWave;
+		Fl_Button* HeightMap;
+
+		//do pixelation
+		Fl_Button* pixelation;
+
+		//do grayscale
+		Fl_Button* grayscale;
 };
