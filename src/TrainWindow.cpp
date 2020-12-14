@@ -170,6 +170,11 @@ TrainWindow(const int x, const int y)
 
 		pty += 30;
 
+		offset = new Fl_Button(605, pty, 80, 20, "Offset");
+		togglify(offset);
+
+		pty += 30;
+
 		grayscale = new Fl_Button(605, pty, 80, 20, "Grayscale");
 		togglify(grayscale);
 

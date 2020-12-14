@@ -98,9 +98,11 @@ class TrainView : public Fl_Gl_Window
 		//FBO
 		FrameBuffer* mainFBO = nullptr;
 		FrameBuffer* subScreenFBO = nullptr;
+		FrameBuffer* colorUVFBO = nullptr;
 		void initFBOs();
 		void drawMainFBO();
 		void drawSubScreenFBO();
+		void drawColorUVFBO();
 
 		//screens
 		VAO* mainScreenVAO = nullptr;
@@ -127,7 +129,7 @@ class TrainView : public Fl_Gl_Window
 		//water
 		WaterMesh* waterMesh = nullptr;
 		void loadWaterMesh();
-		void drawWater();
+		void drawWater(int mode);
 
 		//skyBox
 		SkyBox* skyBox = nullptr;

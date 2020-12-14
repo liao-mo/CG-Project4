@@ -522,53 +522,69 @@ void TrainView::
 doPick()
 //========================================================================
 {
-	// since we'll need to do some GL stuff so we make this window as 
-	// active window
-	make_current();		
+	//// since we'll need to do some GL stuff so we make this window as 
+	//// active window
+	//make_current();		
 
-	// where is the mouse?
-	int mx = Fl::event_x(); 
-	int my = Fl::event_y();
+	//// where is the mouse?
+	//int mx = Fl::event_x(); 
+	//int my = Fl::event_y();
 
-	// get the viewport - most reliable way to turn mouse coords into GL coords
-	int viewport[4];
-	glGetIntegerv(GL_VIEWPORT, viewport);
+	//// get the viewport - most reliable way to turn mouse coords into GL coords
+	//int viewport[4];
+	//glGetIntegerv(GL_VIEWPORT, viewport);
 
-	// Set up the pick matrix on the stack - remember, FlTk is
-	// upside down!
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity ();
-	gluPickMatrix((double)mx, (double)(viewport[3]-my), 
-						5, 5, viewport);
+	//// Set up the pick matrix on the stack - remember, FlTk is
+	//// upside down!
+	//glMatrixMode(GL_PROJECTION);
+	//glLoadIdentity ();
+	//gluPickMatrix((double)mx, (double)(viewport[3]-my), 
+	//					5, 5, viewport);
 
-	// now set up the projection
-	setProjection();
+	//// now set up the projection
+	//setProjection();
 
-	// now draw the objects - but really only see what we hit
-	GLuint buf[100];
-	glSelectBuffer(100,buf);
-	glRenderMode(GL_SELECT);
-	glInitNames();
-	glPushName(0);
+	//// now draw the objects - but really only see what we hit
+	//GLuint buf[100];
+	//glSelectBuffer(100,buf);
+	//glRenderMode(GL_SELECT);
+	//glInitNames();
+	//glPushName(0);
 
-	// draw the cubes, loading the names as we go
-	for(size_t i=0; i<m_pTrack->points.size(); ++i) {
-		glLoadName((GLuint) (i+1));
-		m_pTrack->points[i].draw();
+	//// draw the cubes, loading the names as we go
+	//for(size_t i=0; i<m_pTrack->points.size(); ++i) {
+	//	glLoadName((GLuint) (i+1));
+	//	m_pTrack->points[i].draw();
+	//}
+
+	//// go back to drawing mode, and see how picking did
+	//int hits = glRenderMode(GL_RENDER);
+	//if (hits) {
+	//	// warning; this just grabs the first object hit - if there
+	//	// are multiple objects, you really want to pick the closest
+	//	// one - see the OpenGL manual 
+	//	// remember: we load names that are one more than the index
+	//	selectedCube = buf[3]-1;
+	//} else // nothing hit, nothing selected
+	//	selectedCube = -1;
+
+	//printf("Selected Cube %d\n",selectedCube);
+
+	drawColorUVFBO();
+	colorUVFBO->bind();
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
+	glm::vec3 uv;
+	glReadPixels(Fl::event_x(), h() - Fl::event_y(), 1, 1, GL_RGB, GL_FLOAT, &uv[0]);
+
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	colorUVFBO->unbind();
+	if (uv.b != 1.0) {
+		cout << "uv.r = " << uv.r << " uv.g = " << uv.b << endl;
+		//uv_center.x = uv.x;
+		//uv_center.y = uv.y;
+		//uv_t = tw->wave_t;
 	}
-
-	// go back to drawing mode, and see how picking did
-	int hits = glRenderMode(GL_RENDER);
-	if (hits) {
-		// warning; this just grabs the first object hit - if there
-		// are multiple objects, you really want to pick the closest
-		// one - see the OpenGL manual 
-		// remember: we load names that are one more than the index
-		selectedCube = buf[3]-1;
-	} else // nothing hit, nothing selected
-		selectedCube = -1;
-
-	printf("Selected Cube %d\n",selectedCube);
 }
 
 void TrainView::setUBO()
@@ -754,7 +770,7 @@ void TrainView::drawTeapot() {
 	teapot->Draw(*current_light_shader);
 }
 
-void TrainView::drawWater() {
+void TrainView::drawWater(int mode) {
 	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, (float)NEAR, (float)FAR);
 	glm::mat4 view = camera.GetViewMatrix();
 	glm::mat4 model = glm::mat4(1.0);
@@ -772,7 +788,8 @@ void TrainView::drawWater() {
 	int waveType;
 	if (tw->sineWave->value()) waveType = 0;
 	else if (tw->HeightMap->value()) waveType = 1;
-	waterMesh->draw(waveType);
+	//waterMesh->draw(waveType);
+	waterMesh->draw(mode);
 }
 
 void TrainView::drawSkyBox() {
@@ -906,6 +923,11 @@ void TrainView::initFBOs() {
 		subScreenFBO = new FrameBuffer();
 		subScreenFBO->init(TEXTURE_WIDTH, TEXTURE_HEIGHT);
 	}
+
+	if (!colorUVFBO) {
+		colorUVFBO = new FrameBuffer();
+		colorUVFBO->init(TEXTURE_WIDTH, TEXTURE_HEIGHT);
+	}
 }
 
 void TrainView::drawMainFBO() {
@@ -919,7 +941,7 @@ void TrainView::drawMainFBO() {
 
 	drawTeapot();
 
-	drawWater();
+	drawWater(tw->HeightMap->value());
 
 	drawSkyBox();
 	glBindVertexArray(0);
@@ -943,7 +965,7 @@ void TrainView::drawSubScreenFBO() {
 
 	drawTeapot();
 
-	drawWater();
+	drawWater(2);
 
 	drawSkyBox();
 	glBindVertexArray(0);
@@ -956,6 +978,26 @@ void TrainView::drawSubScreenFBO() {
 	subScreenFBO->unbind();
 }
 
+void TrainView::drawColorUVFBO() {
+	glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+	// set the rendering destination to FBO
+	colorUVFBO->bind();
+	// clear buffer
+	glClearColor(0, 0, 1.0, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	drawWater(2);
+
+	glBindVertexArray(0);
+
+	// if MSAA is on, explicitly copy multi-sample color/depth buffers to single-sample
+	// it also generates mipmaps of color texture object
+	colorUVFBO->update();
+
+	// back to normal window-system-provided framebuffer
+	colorUVFBO->unbind();
+}
+
 void TrainView::drawMainScreen() {
 	glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
 
@@ -966,13 +1008,14 @@ void TrainView::drawMainScreen() {
 	mainScreen_shader->setFloat("pixel_w", 10.0);
 	mainScreen_shader->setFloat("pixel_h", 10.0);
 	mainScreen_shader->setBool("doPixelation", tw->pixelation->value());
+	mainScreen_shader->setBool("doOffset", tw->offset->value());
 	mainScreen_shader->setBool("doGrayscale", tw->grayscale->value());
 	
 
 	glBindVertexArray(mainScreenVAO->vao);
 	glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-	glBindTexture(GL_TEXTURE_2D, mainFBO->getColorId());
+	glBindTexture(GL_TEXTURE_2D, colorUVFBO->getColorId());
 	//ground_texture->bind(0);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }

@@ -6,6 +6,7 @@ uniform float rt_h; // GeeXLab built-in
 uniform float pixel_w = 15.0; // 15.0
 uniform float pixel_h = 10.0; // 10.0
 uniform bool doPixelation;
+uniform bool doOffset;
 uniform bool doGrayscale;
 in vec2 TexCoords;
 
@@ -28,6 +29,11 @@ void main()
     }
   }else{
     tc = texture2D(sceneTex, uv).rgb;
+  }
+
+  if(doOffset){
+    float time = 1.0f;
+    tc = texture( sceneTex, uv + 0.005*vec2( sin(time+1024.0*uv.x),cos(time+768.0*uv.y)) ).xyz;
   }
 
   if(doGrayscale){

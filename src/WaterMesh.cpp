@@ -15,6 +15,7 @@ WaterMesh::WaterMesh(glm::vec3 pos) :
 	grid = new Model(FileSystem::getPath("resources/objects/grid/low_grid.obj"));
 	sinWave_shader = new Shader("../src/shaders/water_surface.vert", "../src/shaders/water_surface.frag");
 	heightMap_shader = new Shader("../src/shaders/water_heightMap.vert", "../src/shaders/water_heightMap.frag");
+	color_uv_shader = new Shader("../src/shaders/color_uv.vert", "../src/shaders/color_uv.frag");
 
 	initWaves();
 	loadHeightMaps();
@@ -65,12 +66,15 @@ void WaterMesh::addTime(float delta_t) {
 	currentTime += delta_t;
 }
 
-void WaterMesh::draw(bool mode) {
+void WaterMesh::draw(int mode) {
 	if (mode == 0) {
 		drawSineWave();
 	}
 	else if (mode == 1) {
 		drawHeightMap();
+	}
+	else if (mode == 2) {
+		drawColorUV();
 	}
 }
 
@@ -170,4 +174,12 @@ void WaterMesh::loadHeightMaps() {
 		path = path + number + ".png";
 		heightMap_textures[i] = new Texture2D(path.c_str());
 	}
+}
+
+void WaterMesh::drawColorUV() {
+	color_uv_shader->use();
+	color_uv_shader->setMat4("model", modelMatrix);
+	color_uv_shader->setMat4("view", viewMatrix);
+	color_uv_shader->setMat4("projection", projectionMatrix);
+	grid->Draw(*color_uv_shader);
 }

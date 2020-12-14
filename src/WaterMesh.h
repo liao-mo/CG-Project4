@@ -36,6 +36,7 @@ public:
 	//shaders
 	Shader* sinWave_shader = nullptr;
 	Shader* heightMap_shader = nullptr;
+	Shader* color_uv_shader = nullptr;
 
 	//sine wave
 	void initWaves();
@@ -55,8 +56,11 @@ public:
 	void loadHeightMaps();
 	int heightMap_counter = 0;
 
+	//color uv plane
+	void drawColorUV();
+
 	// mode 0: sin wave, mode 1: height map
-	void draw(bool mode);
+	void draw(int mode);
 	void setMVP(glm::mat4 m, glm::mat4 v, glm::mat4 p);
 	void setEyePos(glm::vec3 eye_pos);
 	void addTime(float delta_t);

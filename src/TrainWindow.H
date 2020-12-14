@@ -105,6 +105,9 @@ class TrainWindow : public Fl_Double_Window {
 		//do pixelation
 		Fl_Button* pixelation;
 
+		//do offset
+		Fl_Button* offset;
+
 		//do grayscale
 		Fl_Button* grayscale;
 };
