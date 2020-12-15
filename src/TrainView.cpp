@@ -580,10 +580,8 @@ doPick()
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	colorUVFBO->unbind();
 	if (uv.b != 1.0) {
-		cout << "uv.r = " << uv.r << " uv.g = " << uv.b << endl;
-		//uv_center.x = uv.x;
-		//uv_center.y = uv.y;
-		//uv_t = tw->wave_t;
+		cout << "uv.r = " << uv.r << " uv.g = " << uv.g << endl;
+		updateInteractiveHeightMapFBO(1, glm::vec2(uv.r, uv.g));
 	}
 }
 
@@ -785,10 +783,26 @@ void TrainView::drawWater(int mode) {
 	waterMesh->waveLength_coefficient = tw->waterWaveLength->value();
 	waterMesh->speed_coefficient = tw->waterSpeed->value();
 
-	int waveType;
-	if (tw->sineWave->value()) waveType = 0;
-	else if (tw->HeightMap->value()) waveType = 1;
-	//waterMesh->draw(waveType);
+	if (mode == 3) {
+		if (firstDraw) {
+			updateInteractiveHeightMapFBO(0);
+			updateInteractiveHeightMapFBO(0);
+			firstDraw = false;
+		}
+		else {
+			updateInteractiveHeightMapFBO(2);
+		}
+		
+		
+		if (currentFBO == 0) {
+			waterMesh->interactiveTexId = interactiveHeightMapFBO0->getColorId();
+		}
+		else {
+			waterMesh->interactiveTexId = interactiveHeightMapFBO1->getColorId();
+		}
+		mainFBO->bind();
+	}
+
 	waterMesh->draw(mode);
 }
 
@@ -825,6 +839,11 @@ void TrainView::loadShaders() {
 	if (!subScreen_shader) {
 		subScreen_shader = new Shader("../src/shaders/sub_screen.vert", "../src/shaders/sub_screen.frag");
 	}
+
+	if (!interactiveHeightMap_shader) {
+		interactiveHeightMap_shader = new Shader("../src/shaders/interactive_heightmap.vert", "../src/shaders/interactive_heightmap.frag");
+	}
+	
 }
 
 void TrainView::loadModels() {
@@ -911,6 +930,34 @@ void TrainView::initVAOs() {
 		// Unbind VAO
 		glBindVertexArray(0);
 	}
+
+	if (!this->interactiveHeightMapVAO) {
+		float quadVertices[] = {
+			// positions   // texCoords
+			-1.0f,  1.0f,  0.0f, 1.0f,
+			-1.0f,  -1.0f,  0.0f, 0.0f,
+			 1.0f,  -1.0f,  1.0f, 0.0f,
+
+			-1.0f,  1.0f,  0.0f, 1.0f,
+			 1.0f,  -1.0f,  1.0f, 0.0f,
+			 1.0f,  1.0f,  1.0f, 1.0f
+		};
+
+		interactiveHeightMapVAO = new VAO;
+		interactiveHeightMapVAO->count = 6;
+		glGenVertexArrays(1, &interactiveHeightMapVAO->vao);
+		glGenBuffers(1, &interactiveHeightMapVAO->vbo[0]);
+		glBindVertexArray(interactiveHeightMapVAO->vao);
+		glBindBuffer(GL_ARRAY_BUFFER, interactiveHeightMapVAO->vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+		// Unbind VAO
+		glBindVertexArray(0);
+	}
 }
 
 void TrainView::initFBOs() {
@@ -928,6 +975,16 @@ void TrainView::initFBOs() {
 		colorUVFBO = new FrameBuffer();
 		colorUVFBO->init(TEXTURE_WIDTH, TEXTURE_HEIGHT);
 	}
+
+	if (!interactiveHeightMapFBO0) {
+		interactiveHeightMapFBO0 = new FrameBuffer();
+		interactiveHeightMapFBO0->init(TEXTURE_WIDTH, TEXTURE_HEIGHT);
+	}
+
+	if (!interactiveHeightMapFBO1) {
+		interactiveHeightMapFBO1 = new FrameBuffer();
+		interactiveHeightMapFBO1->init(TEXTURE_WIDTH, TEXTURE_HEIGHT);
+	}
 }
 
 void TrainView::drawMainFBO() {
@@ -941,9 +998,13 @@ void TrainView::drawMainFBO() {
 
 	drawTeapot();
 
-	drawWater(tw->HeightMap->value());
+	int waterType = tw->waveTypeBrowser->value();
+	drawWater(waterType);
 
+	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
 	drawSkyBox();
+	glDepthFunc(GL_LESS); // set depth function back to default
+
 	glBindVertexArray(0);
 
 	// if MSAA is on, explicitly copy multi-sample color/depth buffers to single-sample
@@ -965,7 +1026,8 @@ void TrainView::drawSubScreenFBO() {
 
 	drawTeapot();
 
-	drawWater(2);
+	int waterType = tw->waveTypeBrowser->value();
+	drawWater(waterType);
 
 	drawSkyBox();
 	glBindVertexArray(0);
@@ -986,7 +1048,7 @@ void TrainView::drawColorUVFBO() {
 	glClearColor(0, 0, 1.0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	drawWater(2);
+	drawWater(4);
 
 	glBindVertexArray(0);
 
@@ -996,6 +1058,63 @@ void TrainView::drawColorUVFBO() {
 
 	// back to normal window-system-provided framebuffer
 	colorUVFBO->unbind();
+}
+
+void TrainView::updateInteractiveHeightMapFBO(int mode, glm::vec2 u_center) {
+	//mode 0: initialization, mode 1: drop, mode 2: update
+	// set the rendering destination to FBO
+	FrameBuffer* lastfbo;
+	FrameBuffer* currentfbo;
+	if (currentFBO == 0) {
+		lastfbo = interactiveHeightMapFBO1;
+		currentfbo = interactiveHeightMapFBO0;
+		currentFBO = 1;
+	}
+	else {
+		lastfbo = interactiveHeightMapFBO0;
+		currentfbo = interactiveHeightMapFBO1;
+		currentFBO = 0;
+	}
+
+	currentfbo->bind();
+
+	glDisable(GL_DEPTH_TEST);
+	// clear buffer
+	glClearColor(0.0, 0.9, 0.0, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	interactiveHeightMap_shader->use();
+	if (mode == 0) { // initialization
+		interactiveHeightMap_shader->setInt("mode", 0);
+		interactiveHeightMap_shader->setInt("u_water", 1);
+		interactiveHeightMap_shader->setVec2("u_center", u_center);
+		interactiveHeightMap_shader->setFloat("u_radius", 0.01f);
+		interactiveHeightMap_shader->setFloat("u_strength", 1.0f);
+	}
+	else if (mode == 1) { // drop
+		interactiveHeightMap_shader->setInt("mode", 1);
+		interactiveHeightMap_shader->setInt("u_water", 1);
+		interactiveHeightMap_shader->setVec2("u_center", u_center);
+		interactiveHeightMap_shader->setFloat("u_radius", 0.01f);
+		interactiveHeightMap_shader->setFloat("u_strength", 1.0f);
+
+	}
+	else if (mode == 2) { // update
+		interactiveHeightMap_shader->setInt("mode", 2);
+		interactiveHeightMap_shader->setInt("u_water", 1);
+		interactiveHeightMap_shader->setVec2("u_center", u_center);
+		interactiveHeightMap_shader->setFloat("u_radius", 0.01f);
+		interactiveHeightMap_shader->setFloat("u_strength", 1.0f);
+	}
+	glBindVertexArray(interactiveHeightMapVAO->vao);
+	glActiveTexture(GL_TEXTURE0+1);
+	glBindTexture(GL_TEXTURE_2D, lastfbo->getColorId());
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	currentfbo->update();
+	currentfbo->unbind();
+	glEnable(GL_DEPTH_TEST);
 }
 
 void TrainView::drawMainScreen() {
@@ -1014,9 +1133,7 @@ void TrainView::drawMainScreen() {
 
 	glBindVertexArray(mainScreenVAO->vao);
 	glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-	glBindTexture(GL_TEXTURE_2D, colorUVFBO->getColorId());
-	//ground_texture->bind(0);
+	glBindTexture(GL_TEXTURE_2D, mainFBO->getColorId());
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -1026,8 +1143,6 @@ void TrainView::drawSubScreen() {
 	subScreen_shader->use();
 	glBindVertexArray(subScreenVAO->vao);
 	glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, textureColorbuffer);	// use the color attachment texture as the texture of the quad plane
-	glBindTexture(GL_TEXTURE_2D, mainFBO->getColorId());
-	//ground_texture->bind(0);
+	glBindTexture(GL_TEXTURE_2D, interactiveHeightMapFBO1->getColorId());
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }

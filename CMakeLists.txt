@@ -29,7 +29,9 @@ set(SRC_SHADER
     ${SRC_DIR}shaders/main_screen.vert
     ${SRC_DIR}shaders/main_screen.frag
     ${SRC_DIR}shaders/color_uv.vert
-    ${SRC_DIR}shaders/color_uv.frag)
+    ${SRC_DIR}shaders/color_uv.frag
+    ${SRC_DIR}shaders/interactive_heightmap.vert
+    ${SRC_DIR}shaders/interactive_heightmap.frag)
 
 set(SRC_RENDER_UTILITIES
     ${SRC_DIR}RenderUtilities/BufferObject.h

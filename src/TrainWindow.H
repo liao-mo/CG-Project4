@@ -98,9 +98,8 @@ class TrainWindow : public Fl_Double_Window {
 		Fl_Value_Slider* waterWaveLength;
 		Fl_Value_Slider* waterSpeed;
 
-		// sine wave or height map
-		Fl_Button* sineWave;
-		Fl_Button* HeightMap;
+		//wave type browser
+		Fl_Browser* waveTypeBrowser;
 
 		//do pixelation
 		Fl_Button* pixelation;

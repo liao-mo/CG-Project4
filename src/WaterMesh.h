@@ -56,8 +56,11 @@ public:
 	void loadHeightMaps();
 	int heightMap_counter = 0;
 
+	//interactive wave
 	//color uv plane
+	unsigned int interactiveTexId;
 	void drawColorUV();
+	void drawInteractiveWave();
 
 	// mode 0: sin wave, mode 1: height map
 	void draw(int mode);

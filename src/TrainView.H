@@ -92,6 +92,7 @@ class TrainView : public Fl_Gl_Window
 		Shader* light_source_shader = nullptr;
 		Shader* mainScreen_shader = nullptr;
 		Shader* subScreen_shader = nullptr;
+		Shader* interactiveHeightMap_shader = nullptr;
 		void loadShaders();
 		void update_light_shaders();
 
@@ -99,10 +100,13 @@ class TrainView : public Fl_Gl_Window
 		FrameBuffer* mainFBO = nullptr;
 		FrameBuffer* subScreenFBO = nullptr;
 		FrameBuffer* colorUVFBO = nullptr;
+		FrameBuffer* interactiveHeightMapFBO0 = nullptr;
+		FrameBuffer* interactiveHeightMapFBO1 = nullptr;
 		void initFBOs();
 		void drawMainFBO();
 		void drawSubScreenFBO();
 		void drawColorUVFBO();
+		void updateInteractiveHeightMapFBO(int mode, glm::vec2 u_center = glm::vec2(0, 0));
 
 		//screens
 		VAO* mainScreenVAO = nullptr;
@@ -128,6 +132,8 @@ class TrainView : public Fl_Gl_Window
 
 		//water
 		WaterMesh* waterMesh = nullptr;
+		VAO* interactiveHeightMapVAO = nullptr;
+		int currentFBO = 0;
 		void loadWaterMesh();
 		void drawWater(int mode);
 
@@ -161,4 +167,5 @@ class TrainView : public Fl_Gl_Window
 		int k;
 		int ks;
 		bool k_pressed;
+		bool firstDraw = true;
 };

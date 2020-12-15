@@ -13,10 +13,18 @@ uniform mat4 projection;
 const float pi = 3.14159;
 uniform vec3 EyePos;
 uniform sampler2D heightMap;
+uniform sampler2D interactive;
 uniform float amplitude;
+uniform bool doInteractive;
 
 float waveHeight(vec2 texCoord) {
     float height = vec3(texture(heightMap, texCoord)).r;
+    height = 100 * height * amplitude;
+    return height;
+}
+
+float waveHeight_interactive(vec2 texCoord) {
+    float height = vec3(texture(heightMap, texCoord)).r + (vec3(texture(interactive, texCoord)).r * 5);
     height = 100 * height * amplitude;
     return height;
 }
@@ -44,9 +52,14 @@ vec3 waveNormal(vec2 texCoord) {
 void main()
 {
     vec2 texture_coordinate = aTexCoords;
-    vec3 temp_pos;
-    temp_pos = aPos;
-    temp_pos.y = waveHeight(texture_coordinate);
+    vec3 temp_pos = aPos;
+    if(doInteractive){
+        temp_pos.y = waveHeight_interactive(texture_coordinate);
+    }else{
+        temp_pos.y = waveHeight(texture_coordinate);
+    }
+
+    
     FragPos = vec3(model * vec4(temp_pos, 1.0));
     Normal = waveNormal(texture_coordinate);
     Normal = mat3(transpose(inverse(model))) * Normal;

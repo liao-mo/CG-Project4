@@ -10,9 +10,9 @@ WaterMesh::WaterMesh(glm::vec3 pos) :
 	position(pos),
 	amplitude_coefficient(1.0)
 {
-	//grid = new Model(FileSystem::getPath("resources/objects/grid/grid.obj"));
+	grid = new Model(FileSystem::getPath("resources/objects/grid/grid.obj"));
 	//Debug: low polygons for fast loading
-	grid = new Model(FileSystem::getPath("resources/objects/grid/low_grid.obj"));
+	//grid = new Model(FileSystem::getPath("resources/objects/grid/low_grid.obj"));
 	sinWave_shader = new Shader("../src/shaders/water_surface.vert", "../src/shaders/water_surface.frag");
 	heightMap_shader = new Shader("../src/shaders/water_heightMap.vert", "../src/shaders/water_heightMap.frag");
 	color_uv_shader = new Shader("../src/shaders/color_uv.vert", "../src/shaders/color_uv.frag");
@@ -67,13 +67,17 @@ void WaterMesh::addTime(float delta_t) {
 }
 
 void WaterMesh::draw(int mode) {
-	if (mode == 0) {
+	if (mode == 1) {
 		drawSineWave();
 	}
-	else if (mode == 1) {
+	else if (mode == 2) {
 		drawHeightMap();
 	}
-	else if (mode == 2) {
+	else if (mode == 3) {
+		//interactive
+		drawInteractiveWave();
+	}
+	else if (mode == 4) {
 		drawColorUV();
 	}
 }
@@ -126,7 +130,9 @@ void WaterMesh::drawHeightMap() {
 	heightMap_shader->setMat4("view", viewMatrix);
 	heightMap_shader->setMat4("projection", projectionMatrix);
 	heightMap_shader->setInt("heightMap", 1);
+	heightMap_shader->setInt("interactive", 2);
 	heightMap_shader->setFloat("amplitude", amplitude_coefficient);
+	heightMap_shader->setBool("doInteractive", false);
 
 	//check if we shoud change the heightMap after a period of time
 	if (currentTime - previousTime >= 16) {
@@ -155,6 +161,47 @@ void WaterMesh::drawHeightMap() {
 
 	grid->Draw(*heightMap_shader);
 	heightMap_textures[heightMap_counter]->unbind(1);
+}
+
+void WaterMesh::drawInteractiveWave() {
+	heightMap_shader->use();
+	heightMap_shader->setMat4("model", modelMatrix);
+	heightMap_shader->setMat4("view", viewMatrix);
+	heightMap_shader->setMat4("projection", projectionMatrix);
+	heightMap_shader->setInt("heightMap", 1);
+	heightMap_shader->setInt("interactive", 2);
+	heightMap_shader->setFloat("amplitude", amplitude_coefficient);
+	heightMap_shader->setBool("doInteractive", true);
+
+	//check if we shoud change the heightMap after a period of time
+	if (currentTime - previousTime >= 16) {
+		if (heightMap_counter == HEIGHTMAP_NUM - 1) {
+			heightMap_counter = 0;
+		}
+		else {
+			++heightMap_counter;
+		}
+	};
+
+	heightMap_textures[heightMap_counter]->bind(1);
+
+	glActiveTexture(GL_TEXTURE0 + 2);
+	glBindTexture(GL_TEXTURE_2D, interactiveTexId);
+
+
+	heightMap_shader->setVec3("EyePos", eyePos);
+	heightMap_shader->setVec3("light.direction", -1.0f, -1.0f, -0.0f);
+	heightMap_shader->setVec3("viewPos", eyePos);
+	// light properties
+	heightMap_shader->setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+	heightMap_shader->setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
+	heightMap_shader->setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+	// material properties
+	heightMap_shader->setFloat("material.shininess", 32.0f);
+
+	grid->Draw(*heightMap_shader);
+	heightMap_textures[heightMap_counter]->unbind(1);
+	heightMap_textures[heightMap_counter]->unbind(2);
 }
 
 void WaterMesh::loadHeightMaps() {

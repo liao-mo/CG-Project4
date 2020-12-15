@@ -116,7 +116,6 @@ TrainWindow(const int x, const int y)
 		pty+=30;
 
 		// browser to select spline types
-		// TODO: make sure these choices are the same as what the code supports
 		lightBrowser = new Fl_Browser(605, pty, 120, 75, "Light Type");
 		lightBrowser->type(2);		// select
 		lightBrowser->callback((Fl_Callback*)damageCB, this);
@@ -146,24 +145,17 @@ TrainWindow(const int x, const int y)
 		waterSpeed->align(FL_ALIGN_LEFT);
 		waterSpeed->type(FL_HORIZONTAL);
 
-		pty += 25;
-
-		// camera buttons - in a radio button group
-		Fl_Group* waveGroup = new Fl_Group(600, pty, 195, 20);
-		waveGroup->begin();
-		sineWave = new Fl_Button(605, pty, 100, 20, "Sine wave");
-		sineWave->type(FL_RADIO_BUTTON);		// radio button
-		sineWave->value(1);			// turned on
-		sineWave->selection_color((Fl_Color)3); // yellow when pressed
-		sineWave->callback((Fl_Callback*)damageCB, this);
-		HeightMap = new Fl_Button(710, pty, 100, 20, "Height map");
-		HeightMap->type(FL_RADIO_BUTTON);
-		HeightMap->value(0);
-		HeightMap->selection_color((Fl_Color)3);
-		HeightMap->callback((Fl_Callback*)damageCB, this);
-		waveGroup->end();
-
 		pty += 30;
+
+		waveTypeBrowser = new Fl_Browser(605, pty, 120, 75, "wave Type");
+		waveTypeBrowser->type(1);		// select
+		waveTypeBrowser->callback((Fl_Callback*)damageCB, this);
+		waveTypeBrowser->add("Sine wave");
+		waveTypeBrowser->add("Height map");
+		waveTypeBrowser->add("interactive");
+		waveTypeBrowser->select(1);
+
+		pty += 110;
 
 		pixelation = new Fl_Button(605, pty, 80, 20, "Pixelation");
 		togglify(pixelation);
