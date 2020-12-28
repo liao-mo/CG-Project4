@@ -3,13 +3,10 @@ layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texture_coordinate;
 
-uniform mat4 u_model;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
-layout (std140, binding = 0) uniform commom_matrices
-{
-    mat4 u_projection;
-    mat4 u_view;
-};
 
 out V_OUT
 {
@@ -20,9 +17,9 @@ out V_OUT
 
 void main()
 {
-    gl_Position = u_projection * u_view * u_model * vec4(position, 1.0f);
+    gl_Position = projection * view * model * vec4(position, 1.0f);
 
-    v_out.position = vec3(u_model * vec4(position, 1.0f));
-    v_out.normal = mat3(transpose(inverse(u_model))) * normal;
+    v_out.position = vec3(model * vec4(position, 1.0f));
+    v_out.normal = mat3(transpose(inverse(model))) * normal;
     v_out.texture_coordinate = vec2(texture_coordinate.x, 1.0f - texture_coordinate.y);
 }

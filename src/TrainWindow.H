@@ -93,9 +93,20 @@ class TrainWindow : public Fl_Double_Window {
 		// the type of the light
 		Fl_Browser* lightBrowser;
 
-		// we have other widgets as part of the sample solution
-		// this is not for 559 students to know about
-#ifdef EXAMPLE_SOLUTION
-	ExampleWidgets ew;
-#endif
+		//water adjustment
+		Fl_Value_Slider* waterAmplitude;
+		Fl_Value_Slider* waterWaveLength;
+		Fl_Value_Slider* waterSpeed;
+
+		//wave type browser
+		Fl_Browser* waveTypeBrowser;
+
+		//do pixelation
+		Fl_Button* pixelation;
+
+		//do offset
+		Fl_Button* offset;
+
+		//do grayscale
+		Fl_Button* grayscale;
 };

@@ -1,30 +1,3 @@
-/************************************************************************
-     File:        TrainWindow.H
-
-     Author:     
-                  Michael Gleicher, gleicher@cs.wisc.edu
-
-     Modifier
-                  Yu-Chi Lai, yu-chi@cs.wisc.edu
-     
-     Comment:     
-						this class defines the window in which the project 
-						runs - its the outer windows that contain all of 
-						the widgets, including the "TrainView" which has the 
-						actual OpenGL window in which the train is drawn
-
-						You might want to modify this class to add new widgets
-						for controlling	your train
-
-						This takes care of lots of things - including installing 
-						itself into the FlTk "idle" loop so that we get periodic 
-						updates (if we're running the train).
-
-
-     Platform:    Visio Studio.Net 2003/2005
-
-*************************************************************************/
-
 #include <FL/fl.h>
 #include <FL/Fl_Box.h>
 
@@ -143,7 +116,6 @@ TrainWindow(const int x, const int y)
 		pty+=30;
 
 		// browser to select spline types
-		// TODO: make sure these choices are the same as what the code supports
 		lightBrowser = new Fl_Browser(605, pty, 120, 75, "Light Type");
 		lightBrowser->type(2);		// select
 		lightBrowser->callback((Fl_Callback*)damageCB, this);
@@ -154,6 +126,51 @@ TrainWindow(const int x, const int y)
 
 		pty += 110;
 
+		pty += 25;
+		waterAmplitude = new Fl_Value_Slider(675, pty, 120, 20, "Amplitude");
+		waterAmplitude->range(0, 10);
+		waterAmplitude->value(1);
+		waterAmplitude->align(FL_ALIGN_LEFT);
+		waterAmplitude->type(FL_HORIZONTAL);
+		pty += 25;
+		waterWaveLength = new Fl_Value_Slider(675, pty, 120, 20, "Wave length");
+		waterWaveLength->range(0, 10);
+		waterWaveLength->value(5);
+		waterWaveLength->align(FL_ALIGN_LEFT);
+		waterWaveLength->type(FL_HORIZONTAL);
+		pty += 25;
+		waterSpeed = new Fl_Value_Slider(675, pty, 120, 20, "Wave Speed");
+		waterSpeed->range(0, 10);
+		waterSpeed->value(5);
+		waterSpeed->align(FL_ALIGN_LEFT);
+		waterSpeed->type(FL_HORIZONTAL);
+
+		pty += 30;
+
+		waveTypeBrowser = new Fl_Browser(605, pty, 120, 75, "wave Type");
+		waveTypeBrowser->type(1);		// select
+		waveTypeBrowser->callback((Fl_Callback*)damageCB, this);
+		waveTypeBrowser->add("Sine wave");
+		waveTypeBrowser->add("Height map");
+		waveTypeBrowser->add("interactive");
+		waveTypeBrowser->select(1);
+
+		pty += 110;
+
+		pixelation = new Fl_Button(605, pty, 80, 20, "Pixelation");
+		togglify(pixelation);
+
+		pty += 30;
+
+		offset = new Fl_Button(605, pty, 80, 20, "Offset");
+		togglify(offset);
+
+		pty += 30;
+
+		grayscale = new Fl_Button(605, pty, 80, 20, "Grayscale");
+		togglify(grayscale);
+
+		pty += 30;
 
 		// TODO: add widgets for all of your fancier features here
 

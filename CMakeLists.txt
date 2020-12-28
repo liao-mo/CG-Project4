@@ -8,10 +8,30 @@ set(LIB_DIR ${PROJECT_SOURCE_DIR}/lib/)
 set(SRC_SHADER 
     ${SRC_DIR}shaders/simple.vert
     ${SRC_DIR}shaders/simple.frag
-    ${SRC_DIR}shaders/basic_lighting.vs
-    ${SRC_DIR}shaders/basic_lighting.fs
-    ${SRC_DIR}shaders/light_cube.vs
-    ${SRC_DIR}shaders/light_cube.fs)
+    ${SRC_DIR}shaders/basic_lighting.vert
+    ${SRC_DIR}shaders/basic_lighting.frag
+    ${SRC_DIR}shaders/light_cube.vert
+    ${SRC_DIR}shaders/light_cube.frag
+    ${SRC_DIR}shaders/directional_light.vert
+    ${SRC_DIR}shaders/directional_light.frag
+    ${SRC_DIR}shaders/point_light.vert
+    ${SRC_DIR}shaders/point_light.frag
+    ${SRC_DIR}shaders/spot_light.vert
+    ${SRC_DIR}shaders/spot_light.frag
+    ${SRC_DIR}shaders/water_surface.vert
+    ${SRC_DIR}shaders/water_surface.frag
+    ${SRC_DIR}shaders/sky_box.vert
+    ${SRC_DIR}shaders/sky_box.frag
+    ${SRC_DIR}shaders/water_heightMap.vert
+    ${SRC_DIR}shaders/water_heightMap.frag
+    ${SRC_DIR}shaders/sub_screen.vert
+    ${SRC_DIR}shaders/sub_screen.frag
+    ${SRC_DIR}shaders/main_screen.vert
+    ${SRC_DIR}shaders/main_screen.frag
+    ${SRC_DIR}shaders/color_uv.vert
+    ${SRC_DIR}shaders/color_uv.frag
+    ${SRC_DIR}shaders/interactive_heightmap.vert
+    ${SRC_DIR}shaders/interactive_heightmap.frag)
 
 set(SRC_RENDER_UTILITIES
     ${SRC_DIR}RenderUtilities/BufferObject.h
@@ -38,6 +58,9 @@ add_executable(WaterSurface
     ${SRC_DIR}Track.h
     ${SRC_DIR}TrainView.h
     ${SRC_DIR}TrainWindow.h
+    ${SRC_DIR}WaterMesh.h
+    ${SRC_DIR}SkyBox.h
+    ${SRC_DIR}FrameBuffer.h
 
     ${SRC_DIR}main.cpp
     ${SRC_DIR}CallBacks.cpp
@@ -45,6 +68,9 @@ add_executable(WaterSurface
     ${SRC_DIR}Track.cpp
     ${SRC_DIR}TrainView.cpp
     ${SRC_DIR}TrainWindow.cpp
+    ${SRC_DIR}WaterMesh.cpp
+    ${SRC_DIR}SkyBox.cpp
+    ${SRC_DIR}FrameBuffer.cpp
 
     ${SRC_SHADER}
     ${SRC_RENDER_UTILITIES}

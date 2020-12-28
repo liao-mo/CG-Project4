@@ -1,29 +1,3 @@
-/************************************************************************
-     File:        TrainView.H
-
-     Author:     
-                  Michael Gleicher, gleicher@cs.wisc.edu
-
-     Modifier
-                  Yu-Chi Lai, yu-chi@cs.wisc.edu
-     
-     Comment:     
-						The TrainView is the window that actually shows the 
-						train. Its a
-						GL display canvas (Fl_Gl_Window).  It is held within 
-						a TrainWindow
-						that is the outer window with all the widgets. 
-						The TrainView needs 
-						to be aware of the window - since it might need to 
-						check the widgets to see how to draw
-
-	  Note:        we need to have pointers to this, but maybe not know 
-						about it (beware circular references)
-
-     Platform:    Visio Studio.Net 2003/2005
-
-*************************************************************************/
-
 #pragma once
 
 #include "RenderUtilities/BufferObject.h"
@@ -35,23 +9,21 @@
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
 
+#include "WaterMesh.h"
+#include "SkyBox.h"
+#include "FrameBuffer.h"
+
 
 #define SCR_WIDTH 800
 #define SCR_HEIGHT 600
 #define NEAR 0.01
 #define FAR 5000.0
+const int TEXTURE_WIDTH = 1920;  // NOTE: texture size cannot be larger than
+const int TEXTURE_HEIGHT = 1080;  // the rendering window size in non-FBO mode
 
 // Preclarify for preventing the compiler error
 class TrainWindow;
 class CTrack;
-
-
-//#######################################################################
-// TODO
-// You might change the TrainView in order to add different objects to
-// be drawn, or adjust the lighting, or ...
-//#######################################################################
-
 
 // The TrainView also needs to handle its user interface events.
 // since this is an FLTk Window, we need to include FlTk Headers
@@ -97,6 +69,14 @@ class TrainView : public Fl_Gl_Window
 
 		//set ubo
 		void setUBO();
+
+		//draw object functions
+		//draw ground
+		void drawGround();
+
+		//draw train
+		void drawTrain();
+		
 	public:
 		ArcBallCam		arcball;			// keep an ArcBall for the UI
 		int				selectedCube;  // simple - just remember which cube is selected
@@ -105,17 +85,62 @@ class TrainView : public Fl_Gl_Window
 		CTrack*			m_pTrack;		// The track of the entire scene
 
 		//shader objects
-		Shader* basic_light_shader = nullptr;
+		Shader* current_light_shader = nullptr;
 		Shader* directional_light_shader = nullptr;
 		Shader* point_light_shader = nullptr;
 		Shader* spot_light_shader = nullptr;
 		Shader* light_source_shader = nullptr;
-		Texture2D* texture	= nullptr;
+		Shader* mainScreen_shader = nullptr;
+		Shader* subScreen_shader = nullptr;
+		Shader* interactiveHeightMap_shader = nullptr;
+		void loadShaders();
+		void update_light_shaders();
+
+		//FBO
+		FrameBuffer* mainFBO = nullptr;
+		FrameBuffer* subScreenFBO = nullptr;
+		FrameBuffer* colorUVFBO = nullptr;
+		FrameBuffer* interactiveHeightMapFBO0 = nullptr;
+		FrameBuffer* interactiveHeightMapFBO1 = nullptr;
+		void initFBOs();
+		void drawMainFBO();
+		void drawSubScreenFBO();
+		void drawColorUVFBO();
+		void updateInteractiveHeightMapFBO(int mode, glm::vec2 u_center = glm::vec2(0, 0));
+
+		//screens
+		VAO* mainScreenVAO = nullptr;
+		VAO* subScreenVAO = nullptr;
+		void initVAOs();
+		void drawMainScreen();
+		void drawSubScreen();
+
+		//textures
+		Texture2D* ground_texture	= nullptr;
+		Texture2D* water_texture = nullptr;
+
+		//plane
 		VAO* plane			= nullptr;
 		UBO* commom_matrices= nullptr;
+		void loadTextures();
 
 		//models
-		Model* test_model = nullptr;
+		Model* sci_fi_train = nullptr;
+		Model* teapot = nullptr;
+		void loadModels();
+		void drawTeapot();
+
+		//water
+		WaterMesh* waterMesh = nullptr;
+		VAO* interactiveHeightMapVAO = nullptr;
+		int currentFBO = 0;
+		void loadWaterMesh();
+		void drawWater(int mode);
+
+		//skyBox
+		SkyBox* skyBox = nullptr;
+		void loadSkyBox();
+		void drawSkyBox();
 
 		// camera
 		Camera camera;
@@ -142,4 +167,5 @@ class TrainView : public Fl_Gl_Window
 		int k;
 		int ks;
 		bool k_pressed;
+		bool firstDraw = true;
 };
